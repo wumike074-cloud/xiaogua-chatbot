@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gus - RTK | 3D Scanner | AgNav Support</title>
+<style>
+:root {
+  --primary: #1a73e8;
+  --primary-light: #e8f0fe;
+  --bg: #f5f5f5;
+  --sidebar-bg: #ffffff;
+  --chat-bg: #f0f2f5;
+  --user-msg: #1a73e8;
+  --bot-msg: #ffffff;
+  --text: #202124;
+  --text-secondary: #5f6368;
+  --border: #e0e0e0;
+  --success: #0d904f;
+  --warning: #f9ab00;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.app {
+  width: 100%;
+  max-width: 800px;
+  height: 92vh;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Quick chips in greeting */
+.quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 12px;
+}
+.quick-item {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.quick-item:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+/* Chat area */
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.chat-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.chat-header h3 { font-size: 16px; color: var(--text); }
+.chat-header .status { font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 4px; }
+.chat-header .status .dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; }
+.chat-header .actions { display: flex; gap: 8px; }
+.chat-header .actions button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.chat-header .actions button:hover { background: #f1f3f4; }
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: var(--chat-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+.message {
+  display: flex;
+  gap: 8px;
+  max-width: 80%;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+.message.bot { align-self: flex-start; }
+.message .avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.message.user .avatar { background: var(--primary); }
+.message.bot .avatar { background: #e8eaed; }
+.message .bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.message.user .bubble { background: var(--user-msg); color: #fff; border-bottom-right-radius: 4px; }
+.message.bot .bubble { background: var(--bot-msg); color: var(--text); border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.message.bot .bubble ol, .message.bot .bubble ul { padding-left: 18px; margin: 4px 0; }
+.message.bot .bubble li { margin-bottom: 3px; }
+.message.bot .bubble strong { color: #1a73e8; }
+.message.bot .bubble .confidence {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #eee;
+}
+
+/* Feedback */
+.feedback {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+.feedback button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.feedback button:hover { background: #f1f3f4; }
+.feedback button.liked { background: #e6f4ea; border-color: var(--success); color: var(--success); }
+.feedback button.disliked { background: #fce8e6; border-color: #ea4335; color: #ea4335; }
+
+/* Suggestions */
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.suggestions .chip {
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.suggestions .chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+/* Input */
+.input-area {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+.input-area textarea {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  max-height: 120px;
+  line-height: 1.4;
+  transition: border-color 0.15s;
+}
+.input-area textarea:focus { border-color: var(--primary); }
+.input-area button {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.input-area button:hover { background: #1557b0; }
+.input-area button:disabled { background: #c4c7c5; cursor: not-allowed; }
+
+/* Settings Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+}
+.modal h3 { font-size: 18px; margin-bottom: 16px; }
+.modal label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  margin-top: 12px;
+}
+.modal input, .modal select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+.modal input:focus, .modal select:focus { border-color: var(--primary); }
+.modal .hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.modal .btn-row { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+.modal .btn-row button {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.modal .btn-save { background: var(--primary); color: #fff; }
+.modal .btn-save:hover { background: #1557b0; }
+.modal .btn-cancel { background: #f1f3f4; color: var(--text); }
+.modal .btn-cancel:hover { background: #e0e0e0; }
+
+/* Greeting */
+.greeting { text-align: center; padding: 40px 20px; }
+.greeting .logo { font-size: 48px; margin-bottom: 16px; }
+.greeting h3 { font-size: 20px; margin-bottom: 8px; color: var(--text); }
+.greeting p { font-size: 14px; color: var(--text-secondary); max-width: 400px; margin: 0 auto; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .app { height: 100vh; border-radius: 0; max-width: 100%; }
+  .message { max-width: 92%; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <main class="chat-area">
+    <div class="chat-header">
+      <div>
+        <h3>Gus</h3>
+        <div class="status"><span class="dot"></span> Online</div>
+      </div>
+      <div class="actions">
+        <button onclick="clearChat()" title="Clear chat">Clear</button>
+        <button onclick="toggleSettings()" title="Settings">Settings</button>
+      </div>
+    </div>
+    <div class="messages" id="messages">
+      <div class="greeting">
+        <div class="logo">🤖</div>
+        <h3>Hello! I'm Gus, your support assistant.</h3>
+        <p>Ask me anything about RTK positioning, 3D scanners, or agricultural navigation systems. I support both English and Chinese.</p>
+        <div class="quick-chips" id="quickChips"></div>
+      </div>
+    </div>
+    <div class="input-area">
+      <textarea id="userInput" rows="1" placeholder="Type your question here... (English / 中文)" onkeydown="handleKeyDown(event)"></textarea>
+      <button onclick="sendMessage()" title="Send" id="sendBtn">➤</button>
+    </div>
+  </main>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>Settings</h3>
+    <label>AI Provider</label>
+    <select id="aiProvider" onchange="onProviderChange()">
+      <option value="claude">Claude API (Anthropic)</option>
+      <option value="openai">OpenAI API</option>
+    </select>
+    <label>API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-... or sk-ant-...">
+    <p class="hint">Your API key is stored locally in your browser and never uploaded anywhere.</p>
+    <label>Match Threshold (0-100)</label>
+    <input type="range" id="threshold" min="0" max="100" value="15" oninput="document.getElementById('thresholdVal').textContent=this.value">
+    <span style="font-size:13px;color:var(--text-secondary)" id="thresholdVal">15</span>
+    <p class="hint">Lower = more results but may be less accurate. Higher = only high-confidence matches.</p>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="toggleSettings()">Cancel</button>
+      <button class="btn-save" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== KNOWLEDGE BASE ====================
+// Add your Q&A pairs here. Each entry:
+//   id, category (rtk/scanner/agnav), keywords (array), question, answer, tags
+const knowledgeBase = [
+  // --- RTK ---
+  {
+    id: 1, category: "rtk",
+    keywords: ["信号", "丢失", "断连", "不稳定", "signal", "lost", "drop", "unstable", "disconnect", "connection", "weak"],
+    question: "RTK signal keeps dropping / unstable — what should I check?",
+    answer: "**Troubleshooting RTK signal loss:**\n\n1. **Check line of sight** — Make sure there are no buildings, trees, or other obstructions between the base and rover.\n2. **Radio range** — UHF radios typically work within 3-5 km in open areas. If you're near the limit, consider moving the base closer or using a repeater.\n3. **Power supply** — Verify both base and rover batteries are adequately charged (above 20%).\n4. **Antenna connection** — Check that all antenna cables are securely connected and undamaged.\n5. **Interference sources** — Power lines, cell towers, and large metal structures can cause interference. Try relocating.\n6. **Base station stability** — Ensure the base tripod is firmly set and not vibrating.\n7. **Frequency settings** — Confirm base and rover are on the same frequency/channel.\n\nIf the issue persists after checking all of the above, the radio module may need servicing.",
+    tags: ["troubleshooting", "signal", "connection"]
+  },
+  // --- Auto Shutdown ---
+  {
+    id: 101, category: "rtk",
+    keywords: ["自动关机", "关机", "auto shutdown", "shutdown", "power off", "低电量", "low battery", "电量", "充电", "charge", "电池", "battery"],
+    question: "Device shuts down automatically — low battery?",
+    answer: "**Auto-Shutdown: Low Battery Protection**\n\nThe device has a built-in low-battery protection mechanism. When the battery drops below **10%**, the device will automatically power off to protect the battery from deep discharge.\n\n**Diagnosis:**\n1. Check the battery level before shutdown — if it was below 10%, this is normal behavior\n2. Charge the device fully and try powering on — it should work normally\n\n**Prevention:**\n- Charge the device when battery reaches 15-20%\n- Carry a spare battery or power bank for extended field work\n- Monitor battery level regularly during operation via the controller software",
+    tags: ["troubleshooting", "shutdown", "battery", "power"]
+  },
+  {
+    id: 102, category: "rtk",
+    keywords: ["自动关机", "关机", "auto shutdown", "过热", "温度", "overheat", "temperature", "高温", "cooling", "冷却"],
+    question: "Device shuts down in hot weather / high temperature?",
+    answer: "**Auto-Shutdown: Over-Temperature Protection**\n\nIf the ambient temperature is too high, the device may exceed its maximum operating temperature and trigger an automatic shutdown to protect internal components.\n\n**Diagnosis:**\n1. Check if the device feels hot to the touch\n2. Check if the operating environment was particularly hot (direct sunlight, enclosed space, etc.)\n3. Allow the device to cool down in a shaded area for 10-15 minutes\n4. After cooling, power on — it should work normally\n\n**Prevention:**\n- Avoid leaving the device in direct sunlight for extended periods\n- Use a sunshade or cover when operating in hot conditions\n- Ensure ventilation around the receiver (do not wrap or enclose it)\n- Typical operating temperature range: -20°C to +60°C (check your model's spec)",
+    tags: ["troubleshooting", "shutdown", "temperature", "overheat"]
+  },
+  {
+    id: 103, category: "rtk",
+    keywords: ["自动关机", "关机", "auto shutdown", "移动电源", "power bank", "充电宝", "功率", "power", "external", "外部供电"],
+    question: "Device shuts down when using a power bank / external power?",
+    answer: "**Auto-Shutdown: Insufficient Power Supply**\n\nIf the device is powered by a power bank or external battery and shuts down during operation, the power source likely cannot deliver enough current.\n\n**Diagnosis:**\n1. Check the power bank's output specifications — output power (watts) may be too low\n2. Many consumer-grade power banks output only 5V/1A (5W), which may be insufficient\n3. Try using the original battery or a higher-power external supply\n\n**Requirements:**\n- Use a power bank that supports the device's required voltage and current (check device manual)\n- Recommended: power banks with QC/PD fast-charging support, or dedicated survey-grade external batteries\n- Avoid using the power bank's low-current port",
+    tags: ["troubleshooting", "shutdown", "power", "power-bank"]
+  },
+  {
+    id: 104, category: "rtk",
+    keywords: ["X1", "X1 lite", "基站", "base station", "自动关机", "MCU", "固件", "firmware", "bug", "升级", "update"],
+    question: "X1 Lite shuts down automatically when used as base station?",
+    answer: "**Auto-Shutdown: X1 Lite Base Station MCU Firmware Bug**\n\nThere is a known bug in older MCU firmware versions on the X1 Lite that causes automatic shutdown when the device is operating in base station mode.\n\n**Diagnosis:**\n1. Check if the device is an **X1 Lite** model\n2. Check if the issue only occurs in **base station mode** (rover mode works fine)\n3. Check the MCU firmware version in the device info page\n\n**Solution:**\n1. Connect to the device via WiFi or Bluetooth\n2. Navigate to Settings > Device Info and check the MCU firmware version\n3. Download the latest firmware from the manufacturer's website\n4. Update the MCU firmware following the standard firmware update procedure\n5. After the update, test base station operation — the shutdown issue should be resolved\n\n**Note:** This is a firmware-level bug, not a hardware defect. Updating to the latest firmware permanently resolves the issue.",
+    tags: ["troubleshooting", "shutdown", "x1-lite", "base-station", "firmware", "mcu"]
+  },
+  {
+    id: 2, category: "rtk",
+    keywords: ["精度", "误差", "漂移", "accuracy", "precision", "error", "drift", "cm", "centimeter", "不准确", "inaccurate"],
+    question: "RTK accuracy is worse than expected / position drift?",
+    answer: "**Improving RTK accuracy:**\n\n1. **Base coordinate check** — If using a known point, verify the base coordinates are entered correctly. An incorrect base position will shift all measurements.\n2. **Satellite geometry (PDOP)** — Check PDOP value. If PDOP > 3, wait for better satellite geometry.\n3. **Number of satellites** — At least 5 common satellites between base and rover are needed. More is better.\n4. **Baseline length** — Accuracy degrades with distance. Keep baseline under 10 km for best results.\n5. **Multipath** — Nearby reflective surfaces (buildings, water, vehicles) cause multipath errors. Move away from such surfaces.\n6. **Correction age** — If using NTRIP, check that correction latency is under 2 seconds.\n7. **Firmware version** — Ensure both base and rover have the latest firmware.\n\nExpected accuracy: Horizontal ±8mm + 1ppm, Vertical ±15mm + 1ppm under good conditions.",
+    tags: ["troubleshooting", "accuracy", "precision"]
+  },
+  {
+    id: 3, category: "rtk",
+    keywords: ["固定解", "浮动解", "单点", "差分", "fix", "float", "single", "differential", "solution", "RTK fix", "initialization", "初始化", "收敛", "converge", "不固定", "搜星", "卫星", "satellite", "SBAS"],
+    question: "Rover cannot get RTK Fixed solution — how to diagnose?",
+    answer: "**RTK Fix Troubleshooting — Systematic Diagnostic Flow:**\n\nFollow these steps in order based on your device's current status:\n\n**Step 1: Zero satellites (no signal at all)**\n- Go to Device Info and check the registration/authorization status\n- If the device registration has expired, it cannot track satellites → No fix possible\n- **Solution:** Renew the device registration / authorization with your provider\n\n**Step 2: Satellites OK but stuck in Single (Autonomous) — no differential**\n- The rover sees satellites but is not receiving corrections from the base\n- **Check:** Base and rover configuration must match (same frequency, protocol, settings)\n- If configurations don't match, they cannot communicate → Rover stays in Single\n- **Solution:** Verify and align base/rover configuration settings\n\n**Step 3: Entered Differential but won't reach Float or Fix**\n- Go to the SBAS settings in the software and **disable SBAS**\n- If disabling SBAS causes the RTK status to drop from Differential back to Single, it means the rover is NOT actually receiving corrections from the base\n- **Check:** Radio frequency, protocol, and channel settings on both base and rover\n- The SBAS signal was masking the real issue (no base communication)\n\n**Step 4: Float solution achieved but won't go to Fix**\n- Base and rover are communicating successfully (corrections are being received)\n- The issue is likely **environmental** — obstructions, multipath, or poor satellite geometry\n- **Solution:** Move to a more open area with clear sky view\n- Wait 10-60 seconds after relocating for the ambiguity to resolve\n\n**Quick reference:**\n| Status | Meaning | Most Likely Cause |\n|--------|---------|-------------------|\n| 0 satellites | No signal | Registration expired |\n| Single (no diff) | No corrections | Config mismatch |\n| Differential only | Weak corrections | SBAS masking / radio issue |\n| Float (not Fix) | Corrections OK | Environmental / obstructions |",
+    tags: ["troubleshooting", "fix", "initialization", "diagnostic-flow"]
+  },
+  {
+    id: 4, category: "rtk",
+    keywords: ["NTRIP", "CORS", "网络", "cors", "ntrip", "network", "mount", "mountpoint", "IP", "port", "连接", "connect"],
+    question: "How to configure NTRIP / CORS connection?",
+    answer: "**NTRIP Client Setup:**\n\n1. **Get CORS account** — Register with your local CORS network provider to get username, password, IP address, and port.\n2. **Enter settings in controller:**\n   - Address/IP: e.g., `cors.example.com` or `203.0.113.10`\n   - Port: usually `2101` (standard NTRIP port)\n   - Username & Password: from your CORS provider\n   - Mount Point: select from the list after connecting (e.g., `RTCM33_GR_4.3`)\n3. **Select correction format** — RTCM 3.2 or 3.3 is recommended. CMR+ also supported.\n4. **Internet connection** — Make sure the controller has internet access (SIM card with data plan or WiFi).\n5. **Test connection** — After entering, tap \"Connect\" or \"Get Mount Points\". If mount points appear, the connection is working.\n\n**Common NTRIP mount point naming:**\n- `RTCM33` = RTCM 3.3 format\n- `VRS` = Virtual Reference Station\n- `iMAX`, `MAX` = Master-Auxiliary correction\n- `NEAR` = Nearest physical station",
+    tags: ["setup", "ntrip", "cors", "network"]
+  },
+  {
+    id: 5, category: "rtk",
+    keywords: ["基站", "base station", "setup", "架设", "base", "tripod", "三脚架", "level", "水平"],
+    question: "How to properly set up a base station?",
+    answer: "**Base Station Setup Procedure:**\n\n1. **Choose location** — Open sky view, away from obstructions and interference sources. High ground is best.\n2. **Set up tripod** — Firmly plant the tripod, adjust legs so the top plate is roughly level.\n3. **Mount base receiver** — Attach the receiver to the tribrach on the tripod. Use the optical plummet or laser to center precisely over the point.\n4. **Level the tribrach** — Adjust the three leveling screws until the bubble is centered.\n5. **Attach antenna** — Connect the UHF radio antenna. Make sure it's vertical.\n6. **Power on** — Connect battery and power on the base receiver.\n7. **Configure base mode** — On the controller, set the receiver to \"Base\" mode.\n8. **Enter coordinates** — Either:\n   - Enter known coordinates if set up over a known point\n   - Use \"Here\" position (autonomous averaging, ~2-5m accuracy) if relative accuracy is sufficient\n9. **Start transmitting** — Confirm the base radio TX light is flashing (transmitting corrections).\n10. **Verify with rover** — Walk to a known point with the rover and check the measured position.",
+    tags: ["setup", "base station", "hardware"]
+  },
+  {
+    id: 6, category: "rtk",
+    keywords: ["电台", "radio", "UHF", "frequency", "频率", "range", "距离", "功率", "power", "channel"],
+    question: "Radio connection issues between base and rover?",
+    answer: "**Radio Troubleshooting:**\n\n1. **Frequency match** — Base and rover radios must be on the exact same frequency. Even 0.025 MHz offset will cause no connection.\n2. **Radio protocol** — Both radios must use the same protocol (e.g., TRIMTALK, SATEL, TRANSEOT). Mismatched protocol = no data.\n3. **Power setting** — Higher power = longer range but consumes more battery. 1W is typical for 2-3 km, 2W+ for 5+ km.\n4. **Antenna height** — Raising the base antenna by 1 meter can add significant range. Use an extension pole if needed.\n5. **Antenna type** — Use the correct antenna for your frequency band (410-470 MHz typical). A damaged or wrong-band antenna kills range.\n6. **Line of sight** — UHF is essentially line-of-sight. Hills, buildings, dense forest block the signal.\n7. **Cable check** — Inspect the antenna cable for kinks, cuts, or loose connectors.\n8. **Interference** — Other radios on the same channel, power lines, and electrical equipment can interfere. Try a different channel.",
+    tags: ["troubleshooting", "radio", "hardware"]
+  },
+
+  // --- 3D Scanner ---
+  {
+    id: 7, category: "scanner",
+    keywords: ["扫描", "scan", "点云", "point cloud", "精度", "accuracy", "noise", "噪声", "质量", "quality"],
+    question: "3D scan quality is poor / too much noise in point cloud?",
+    answer: "**Improving 3D Scan Quality:**\n\n1. **Scan distance** — Stay within the scanner's optimal range. Quality drops significantly beyond the rated range.\n2. **Surface reflectivity** — Dark, shiny, or transparent surfaces produce poor returns. Use scanning spray on glossy/dark surfaces (white powder spray for laser scanning).\n3. **Ambient light** — Bright sunlight can interfere with some scanners. Scan in overcast conditions or shade the target area when possible.\n4. **Scanner stability** — Ensure the scanner is on a stable tripod. Vibrations during scanning cause noise.\n5. **Resolution settings** — Higher resolution = better detail but longer scan time. Match resolution to your application.\n6. **Overlap** — For multi-scan projects, ensure 30-50% overlap between adjacent scans.\n7. **Clean lens** — A dirty scanner lens or mirror will degrade all scans. Clean with a microfiber cloth.\n8. **Temperature** — Let the scanner warm up for 5-10 minutes before scanning. Thermal drift affects accuracy.",
+    tags: ["troubleshooting", "quality", "scanning"]
+  },
+  {
+    id: 8, category: "scanner",
+    keywords: ["拼接", "配准", "registration", "align", "alignment", "merge", "对齐", "坐标系", "coordinate"],
+    question: "How to align/register multiple scans together?",
+    answer: "**Scan Registration Methods:**\n\n1. **Target-based registration** — Place spherical or checkerboard targets in the overlapping areas between scans. Software auto-detects targets and aligns scans. This is the most accurate method.\n2. **Cloud-to-cloud (ICP)** — Iterative Closest Point algorithm. Useful when targets weren't used. Software finds common surfaces between scans and aligns them.\n3. **Feature-based** — Manually pick common points (corners, edges) in two scans. Works well for structured environments like buildings.\n4. **Survey control** — If you have RTK/total station coordinates for targets, you can georeference scans directly.\n\n**Best practices:**\n- Use at least 3 non-collinear targets per scan pair\n- Ensure targets are clearly visible from both scan positions\n- Place targets at varying heights, not all on the same plane\n- Check registration error (RMS) — should typically be under 5 mm for good registration",
+    tags: ["workflow", "registration", "alignment"]
+  },
+  {
+    id: 9, category: "scanner",
+    keywords: ["校准", "calibration", "误差", "error", "补偿", "compensate", "检查"],
+    question: "How often should I calibrate the scanner, and how to check calibration?",
+    answer: "**Scanner Calibration:**\n\n**Frequency:**\n- Factory calibration is typically valid for 1 year\n- Check calibration monthly if the scanner is used daily or transported frequently\n- Re-calibrate immediately if the scanner has been dropped or subjected to strong impact\n\n**Quick calibration check:**\n1. Set up the scanner in a room with flat walls at various distances\n2. Scan a flat wall at ~5m distance\n3. Fit a plane to the point cloud in software\n4. Check the standard deviation of points from the plane — should be close to the scanner's spec (e.g., <2mm @10m)\n5. Scan a known calibrated sphere or scale bar and measure it in the software\n\n**Signs calibration is off:**\n- Systematic curvature in \"flat\" surfaces\n- Scale errors (measured distances consistently short or long)\n- Angular errors between orthogonal surfaces\n\nContact your dealer or manufacturer for calibration service.",
+    tags: ["maintenance", "calibration", "troubleshooting"]
+  },
+  {
+    id: 10, category: "scanner",
+    keywords: ["导出", "export", "format", "格式", "LAS", "E57", "PTS", "XYZ", "ASCII", "软件", "software"],
+    question: "What export formats are supported and which software to use?",
+    answer: "**Common Point Cloud Formats:**\n\n| Format | Type | Best For |\n|--------|------|----------|\n| **E57** | Binary, vendor-neutral | Archive, data exchange |\n| **LAS/LAZ** | Binary, industry standard | Survey, GIS, Civil3D |\n| **PTS/PTX** | ASCII/Binary | Leica, FARO ecosystem |\n| **XYZ** | ASCII text | Simple, universal import |\n| **PLY** | Binary/ASCII | Mesh processing |\n| **RCP/RCS** | Autodesk format | AutoCAD, Revit, Navisworks |\n\n**Recommended Software by Task:**\n- **Registration & editing**: CloudCompare (free), Trimble RealWorks, FARO Scene, Leica Cyclone\n- **CAD/BIM**: AutoCAD + Recap, Revit, MicroStation\n- **Survey/mapping**: Civil3D, Virtual Surveyor, Carlson\n- **Mesh generation**: Geomagic, MeshLab",
+    tags: ["workflow", "software", "export"]
+  },
+
+  // --- AgNav (Agricultural Navigation) ---
+  {
+    id: 11, category: "agnav",
+    keywords: ["guidance", "导航", "steering", "转向", "auto steer", "自动转向", "line", "AB线", "AB line"],
+    question: "How to set up AB guidance line for auto-steering?",
+    answer: "**Setting Up AB Line Guidance:**\n\n1. **Position tractor** — Drive to the starting point of your first pass (Point A).\n2. **Mark Point A** — On the console, press \"Set A\" or tap the A point button.\n3. **Drive the line** — Drive straight to the end of the pass (Point B). Go at least 50 meters for good line quality.\n4. **Mark Point B** — Press \"Set B\" or tap the B point button.\n5. **Line created** — The system now shows the AB line and parallel guidance lines (swaths).\n6. **Engage auto-steer** — Align with the first swath and press the auto-steer engage button.\n\n**Tips:**\n- Use RTK Fixed solution for accurate guidance (±2.5cm pass-to-pass)\n- AB line direction should match your field layout\n- For curved fields, use A+ heading or contour mode instead\n- Verify implement width is set correctly in settings",
+    tags: ["setup", "guidance", "auto-steer"]
+  },
+  {
+    id: 12, category: "agnav",
+    keywords: ["校准", "calibration", "IMU", "gyro", "陀螺", "terrain", "地形", "坡度", "slope", "补偿"],
+    question: "How to calibrate the terrain compensation / IMU?",
+    answer: "**Terrain Compensation Calibration:**\n\nRequired for accurate guidance on slopes and uneven terrain.\n\n1. **Find a level surface** — Park the tractor on level ground.\n2. **Enter calibration menu** — Navigate to Settings > Vehicle > Terrain Compensation.\n3. **Zero calibration** — With the vehicle stationary and level, press \"Calibrate Zero\" or \"Set Level\".\n4. **IMU calibration** (if equipped):\n   - Drive forward in a straight line at normal working speed for 30+ seconds\n   - Make a smooth 90° turn\n   - Drive straight again for 15+ seconds\n   - System will automatically calibrate gyro bias\n5. **Verify** — Check the roll/pitch display. On level ground, both should read near 0°.\n\n**When to recalibrate:**\n- After mounting the antenna/receiver in a new position\n- After firmware update\n- If auto-steer performance degrades on slopes\n- After vehicle maintenance that could shift the receiver mount",
+    tags: ["calibration", "setup", "terrain"]
+  },
+  {
+    id: 13, category: "agnav",
+    keywords: ["section", "control", "section control", "overlap", "重叠", "seed", "spray", "播种", "喷洒", "覆盖率"],
+    question: "How does section control work to avoid overlap?",
+    answer: "**Section Control (Automatic Section Shutoff):**\n\nSection control automatically turns individual planter/sprayer sections ON/OFF based on GPS position to prevent double-application in headlands and point rows.\n\n**Setup:**\n1. **Measure implement** — Measure the distance from GPS antenna to each section's left/right edge\n2. **Define sections** — Enter the number of sections and width of each section in the console\n3. **Configure controller** — Connect the section control output to your implement's control system (ISOBUS or relay box)\n4. **Set overlap** — Configure overlap percentage (0-100%). 0% = sections shut off exactly at boundary; 50% = half overlap allowed\n\n**Benefits:**\n- Seed savings: 5-15% on oddly shaped fields\n- Chemical savings: significant reduction in spray overlap\n- No double-planting in headlands and around obstacles\n\n**Troubleshooting:**\n- If sections don't turn off, check wiring and controller settings\n- Section timing may need look-ahead adjustment for valve response delay",
+    tags: ["setup", "section-control", "precision-ag"]
+  },
+  {
+    id: 14, category: "agnav",
+    keywords: ["NMEA", "output", "GPS", "GNSS", "串口", "serial", "baud", "波特率", "GGA", "RMC", "VTG"],
+    question: "How to output NMEA data to an external device/monitor?",
+    answer: "**NMEA Output Configuration:**\n\n1. **Identify output port** — The receiver typically has a serial port (DB9) or Bluetooth for NMEA output.\n2. **Connect cable** — Use the appropriate serial cable to connect to the external device.\n3. **Configure NMEA messages:**\n   - Enter Settings > GNSS > NMEA Output\n   - Enable the messages you need:\n     - **GGA** — Position + fix quality (most commonly used)\n     - **RMC** — Position + speed + course\n     - **VTG** — Course and speed over ground\n     - **GSA/GST** — Satellite and accuracy info\n4. **Set baud rate** — Typically 115200 or 57600. Must match the receiving device.\n5. **Set update rate** — 1 Hz, 5 Hz, or 10 Hz. Higher rates needed for machine control.\n6. **Test output** — Use a serial monitor tool to verify NMEA sentences are being output.\n\n**Common issues:**\n- Baud rate mismatch = garbled data\n- Only TX connected (need TX, RX, GND for two-way communication)\n- Incorrect NMEA talker ID (GP vs GN vs GA)",
+    tags: ["setup", "nmea", "integration"]
+  },
+  {
+    id: 15, category: "rtk",
+    keywords: ["firmware", "update", "固件", "升级", "update", "软件", "software", "version", "wifi", "X1", "Z1", "192.168", "admin", "蓝牙", "bluetooth"],
+    question: "How to update firmware on the receiver? (X1 / Z1 series)",
+    answer: "**Firmware Update Procedure:**\n\n**Before you start:**\n- Back up all settings and configurations\n- Ensure the device battery is > 50% or connect to external power\n- Download the correct firmware file for your device model\n- **Do NOT power off the device or close the browser during update**\n\n---\n\n**Standard Update (X1 Series and similar):**\n\n1. Power on the device and connect to its **WiFi hotspot**\n   - WiFi name format: `[Model]-[SN]`, e.g., `X1-2125M0253`\n   - WiFi password: `12345678` (default)\n2. Open a browser and go to: **http://192.168.10.12**\n3. Login — Username: `admin`, Password: `admin`\n4. In the left navigation bar, select **Firmware Update**\n5. Choose the firmware file and click **Update**\n6. **CRITICAL:** Do NOT power off the device or navigate away from the page during the update\n7. The device will restart automatically after the update completes\n8. Connect to the PAD software and go to Device Info to verify the firmware version\n\n---\n\n**Z1 Series — Special Procedure:**\n\nZ1 series devices **cannot have Bluetooth and WiFi turned on at the same time**. By default, Bluetooth is enabled on startup and WiFi is off.\n\n1. **First, connect via Bluetooth** to the PAD/controller software\n2. Go to Device Control Settings in the software\n3. Select **Turn On WiFi** — the device's WiFi will now activate\n4. Once WiFi is on, follow the standard update steps above (connect to WiFi, browser 192.168.10.12, etc.)\n5. **After update completes and device restarts:** WiFi will be OFF again by default\n6. If you need WiFi again, manually re-enable it from the PAD software\n\n**Warning:** Power loss during firmware update can brick the device. Always use a stable power source.",
+    tags: ["maintenance", "firmware", "update", "x1", "z1"]
+  },
+
+  // --- General ---
+  {
+    id: 16, category: "rtk",
+    keywords: ["bluetooth", "蓝牙", "pair", "配", "connect", "连接", "控制器", "controller"],
+    question: "Cannot connect controller to receiver via Bluetooth?",
+    answer: "**Bluetooth Troubleshooting:**\n\n1. **Check pairing mode** — The receiver's Bluetooth light should be flashing (pairing mode). If solid, it's already connected to another device.\n2. **Distance** — Keep controller within 5 meters of receiver during pairing.\n3. **Clear old pairings** — Delete any previous pairings for this receiver from the controller's Bluetooth list, then re-pair.\n4. **PIN code** — Common default PINs are `0000` or `1234`. Check receiver manual.\n5. **Restart both** — Power cycle the receiver and controller, then try pairing again.\n6. **Bluetooth version** — Some older receivers use Bluetooth 2.0 which may not be compatible with newer tablets. Use an external Bluetooth adapter if needed.\n7. **WiFi conflict** — On some controllers, WiFi and Bluetooth can interfere. Turn off WiFi temporarily.\n\nAs a workaround, use a serial cable connection if available.",
+    tags: ["troubleshooting", "bluetooth", "connection"]
+  },
+  {
+    id: 17, category: "scanner",
+    keywords: ["电池", "battery", "充电", "charge", "power", "电源", "shutdown", "关机", "off"],
+    question: "Scanner battery drains quickly or won't charge?",
+    answer: "**Battery Issues:**\n\n1. **Battery age** — Li-ion batteries degrade over time. After 2-3 years of heavy use, expect reduced capacity. Consider replacement.\n2. **Temperature** — Charging below 0°C or above 45°C damages batteries. Charge at room temperature.\n3. **Storage** — Store batteries at 40-60% charge if not using for several months. Storing at 100% accelerates degradation.\n4. **Clean contacts** — Dirty battery contacts cause poor charging. Clean with isopropyl alcohol.\n5. **Charger check** — Try a different charger if available. The charger's indicator light should behave per manual.\n6. **Deep discharge** — If battery was stored at 0% for a long period, it may be permanently damaged.\n\n**Scanner runtime expectations:**\n- Internal battery: typically 3-6 hours of continuous scanning\n- External battery pack: 8-12 hours\n- Hot-swap capable: most scanners support hot-swapping external batteries during operation",
+    tags: ["troubleshooting", "battery", "power", "maintenance"]
+  },
+  {
+    id: 18, category: "agnav",
+    keywords: ["精度", "accuracy", "pass-to-pass", "行间距", "偏差", "deviation", "skipping", "gap", "重叠"],
+    question: "Auto-steer pass-to-pass accuracy is inconsistent?",
+    answer: "**Improving Auto-Steer Pass-to-Pass Accuracy:**\n\nExpected performance: ±2.5 cm pass-to-pass with RTK Fix.\n\n1. **GNSS fix quality** — Must be RTK Fixed. Float or DGPS will give 20-50 cm variation.\n2. **IMU calibration** — An improperly calibrated IMU will cause errors, especially on slopes and during turns.\n3. **Vehicle setup** — Verify these measurements in the system:\n   - Antenna position (X, Y, Z offset from rear axle center)\n   - Wheelbase\n   - Implement width and hitch offset\n4. **Steering kit** — Check for mechanical play/slop in the steering motor, belt, or friction wheel.\n5. **Look-ahead** — Adjust the look-ahead time/distance. Too short = overshoot, too long = sluggish response.\n6. **Speed** — Auto-steer works best at consistent working speed (6-15 km/h typical). Very slow (<2 km/h) or fast (>25 km/h) degrades performance.\n7. **Hydraulic system** — For hydraulic steering: check oil level, no air in lines, adequate flow.\n\n**Test procedure:**\n- Set up an AB line, make 5 passes\n- Measure the gap/overlap between passes at 3 points\n- Calculate average deviation",
+    tags: ["troubleshooting", "accuracy", "auto-steer"]
+  },
+
+  // --- SingularPad Software ---
+  {
+    id: 201, category: "rtk",
+    keywords: ["SingularPad", "安装", "install", "Android", "系统要求", "requirement", "下载", "download", "版本", "version", "spec"],
+    question: "What are the installation requirements for SingularPad?",
+    answer: "**SingularPad Installation Requirements:**\n\nSingularPad runs exclusively on **Android** operating system. Download from the official website's download center or contact SingularXYZ.\n\n**Minimum Device Specifications:**\n- **CPU:** 2.1 GHz (ARM Cortex only)\n- **RAM:** At least 4 GB\n- **Android Version:** 4.2 or higher\n- **Screen Size:** 4.5 inches or larger\n- **Resolution:** 960 × 640 pixels or higher\n- **Hardware:** Bluetooth / Wi-Fi / GPRS required\n\n**Note:** The app only supports ARM Cortex processors. Devices with other CPU architectures may not run the software properly.",
+    tags: ["software", "installation", "requirements", "singularpad"]
+  },
+  {
+    id: 202, category: "rtk",
+    keywords: ["SingularPad", "连接", "connect", "bluetooth", "蓝牙", "device", "communication", "配对", "pair", "USB", "demo"],
+    question: "How to connect receiver to SingularPad? (Bluetooth / USB)",
+    answer: "**Connecting Receiver to SingularPad:**\n\n1. Go to **Device** > **Communication**\n2. Select the correct **Model Type** for your receiver\n3. Choose connection method: **Bluetooth**, **USB**, **Demo**, or **Debug**\n\n**Bluetooth Connection:**\n- Ensure Bluetooth pairing is successful at the Android system level first\n- If connection fails: go to Android Bluetooth settings, **forget/remove** the paired device, restart both receiver and software, then pair again\n- **Important:** Selecting the wrong model type will cause slow connection or measurement failure\n\n**USB Connection:**\n- Connect via USB cable and configure the Baud Rate\n\n**Demo Mode:**\n- Simulation mode for training when no physical receiver is available (not all functions available)\n\n**Debug Mode:**\n- For sending commands directly to the device for testing and troubleshooting",
+    tags: ["software", "connection", "bluetooth", "singularpad"]
+  },
+  {
+    id: 203, category: "rtk",
+    keywords: ["SingularPad", "基站", "base", "base station", "setup", "radio", "internal radio", "device internet", "external radio", "protocol", "channel", "frequency"],
+    question: "How to set up base station in SingularPad?",
+    answer: "**Base Station Setup in SingularPad:**\n\nGo to **Device** > **Base**. Four data link modes are available:\n\n**1. Internal Radio:**\n- Uses built-in UHF radio to transmit corrections\n- Base and rover must share the same: **Protocol**, **Channel**, **Frequency**\n- Radio types and protocols:\n  - **U Radio:** TRIMTALK, TRANSEOT, CSS (3-5 km)\n  - **LU Radio:** CSS only for base; rover supports multiple protocols (CSS: 10-15 km)\n  - **M5 Radio:** All protocols supported (CSS: 10-15 km)\n- **Baud Rate:** Higher = faster but shorter range; Lower = slower but more stable over distance\n\n**2. External Radio:**\n- Configure protocol and frequency on the external radio itself, not in SingularPad\n\n**3. Device Internet:**\n- Insert SIM card in base, configure server IP/port, rover receives via NTRIP\n\n**4. Internal Radio + Device Internet:**\n- Transmits corrections via both mobile network and internal radio simultaneously\n\n**Base Initialization Methods:**\n- **Single Point:** Approximate coordinates, suitable for testing\n- **Assigned Base Coordinates:** Known point, highest accuracy\n- **Use Current Coordinates:** Convenient but less accurate than known point",
+    tags: ["software", "base-station", "setup", "radio", "singularpad"]
+  },
+  {
+    id: 204, category: "rtk",
+    keywords: ["SingularPad", "移动站", "rover", "setup", "NTRIP", "phone internet", "PPP", "internal radio", "device internet"],
+    question: "How to set up rover in SingularPad?",
+    answer: "**Rover Setup in SingularPad:**\n\nGo to **Device** > **Rover**. Four data link modes:\n\n**1. Internal Radio:**\n- Set the same Protocol, Channel, and Frequency as the base station\n- Receiver status should change to FIXED once corrections are received\n\n**2. Device Internet (SIM in receiver):**\n- Insert SIM card in receiver\n- Input server IP, Port, Username, Password\n- Supports **NTRIP** (standard protocol, requires username/password) and **TCP Client** (direct correction transmission)\n\n**3. Phone Internet (SIM in controller):**\n- Ensure the controller has internet access\n- Configure same as Device Internet (IP, Port, User, Password)\n\n**4. PPP (Precise Point Positioning):**\n- Select PPP in Data Link and apply\n- Takes approximately **10 minutes** to converge to standard accuracy\n- Status bar shows \"Converging\" then changes to \"PPP\" when ready\n\n**SBAS (Satellite-Based Augmentation):**\n- Tap satellite icon > Settings > Enable SBAS\n- Improves positioning accuracy using satellite augmentation signals",
+    tags: ["software", "rover", "setup", "ntrip", "singularpad"]
+  },
+  {
+    id: 205, category: "rtk",
+    keywords: ["SingularPad", "IMU", "初始化", "initialization", "惯导", "tilt", "倾斜", "survey", "pole", "calibration"],
+    question: "How to initialize IMU / tilt survey in SingularPad?",
+    answer: "**IMU Initialization Procedure:**\n\n1. In the Survey interface, tap the **IMU icon** to open tilt survey\n2. On first use, follow the on-screen prompts to initialize the IMU module (takes a few seconds)\n3. The system will prompt you to **confirm the pole height** (default: 1.8 meters)\n\n**During calibration:**\n- Keep the **pole tip fixed** on the ground — do NOT move the tip\n- Shake the pole back and forth (within 60° tilt, ideally under 30° for best accuracy)\n- Ensure the receiver has satellite tracking and FIXED solution\n\n**After successful calibration:**\n- The measurement icon changes to indicate IMU is ready\n- Built-in sensors accurately calculate the actual offset within 60° pole tilt\n- Positioning accuracy: up to **2.5 cm**\n\n**Important:**\n- If the receiver is **powered off or reset**, you must re-initialize the IMU\n- If calibration expires, tap **Calibrate** and follow the guidance again\n- When IMU accuracy decreases, perform **Pole Calibration** in Inspection Accuracy",
+    tags: ["software", "imu", "tilt-survey", "calibration", "singularpad"]
+  },
+  {
+    id: 206, category: "rtk",
+    keywords: ["SingularPad", "localization", " localization", "本地化", "坐标系", "coordinate", "转换", "WGS84", "grid", "control point"],
+    question: "How to perform Localization (WGS84 to local grid) in SingularPad?",
+    answer: "**Localization — Coordinate System Transformation:**\n\nLocalization converts WGS84 coordinates to local grid coordinates. Typically performed **once per project**.\n\n**Steps:**\n1. Go to **Project** > **Localization**\n2. Enter at least **3 control point pairs**:\n   - **Known points** (K1, K2, K3): Local grid coordinates\n   - **Measured points** (A1, A2, A3): GNSS measured WGS84 coordinates\n3. Tap **Calculate** — the software computes conversion parameters automatically\n4. Check **conversion residuals**:\n   - Horizontal residual ≤ 0.02 m\n   - Vertical residual ≤ 0.05 m\n5. Tap **Apply** to update the coordinate system\n\n**Tips:**\n- More control points = better accuracy and redundancy\n- Ensure control points are well-distributed across the project area\n- Supports *.loc format import/export\n- Use Horizontal/Vertical control toggles to compute parameters separately",
+    tags: ["software", "localization", "coordinate-system", "singularpad"]
+  },
+  {
+    id: 207, category: "rtk",
+    keywords: ["SingularPad", "calibrate point", "校准", "base coordinate", "base station", "坐标校准", "post-measure"],
+    question: "What's the difference between Localization, Calibrate Point, and Post-Measure Correction?",
+    answer: "**Three Coordinate Calibration Methods — Comparison:**\n\n| Method | How It Works | Affects |\n|--------|-------------|--------|\n| **Localization** | Changes the coordinate system via transformation parameters | Entire project (all points) |\n| **Calibrate Point** | Changes the base station coordinates | All subsequent measurements |\n| **Post-Measure Correction** | Modifies base coordinates for selected points only | Only the selected point(s) |\n\n**When to use each:**\n\n**Localization:** Once per project to set up the local grid system. Requires 3+ control point pairs.\n\n**Calibrate Point:** When you need to change the base station position mid-project. Add known point coordinates, measure the GNSS point, and apply — all rover points update accordingly.\n\n**Post-Measure Correction:** Correct specific measurements by selecting start/end times. Only affects the selected points, not the entire project.",
+    tags: ["software", "calibration", "localization", "coordinate", "singularpad"]
+  },
+  {
+    id: 208, category: "rtk",
+    keywords: ["SingularPad", "activate", "激活", "device activation", "software activation", "registration", "注册", "license"],
+    question: "How to activate device and software in SingularPad?",
+    answer: "**Device Activation:**\n1. Go to **Device** > **Device Activation**\n2. Enter the **registration code** or **scan QR code**\n3. Confirm activation\n\n**Software Activation (SingularPad):**\n1. Go to **Project** > **About Software**\n2. Tap **Software Activation**\n3. Register and activate your software\n\n**Note:** If you don't have an activation code, contact your sales or support team. Provide your **order details** and **software ID** to obtain the activation code.\n\n**Device Information Check:**\n- After Bluetooth connection: **Device** > **Device Info**\n- View: hardware version, firmware version, current data link, battery power, and other device information",
+    tags: ["software", "activation", "license", "registration", "singularpad"]
+  },
+  {
+    id: 209, category: "rtk",
+    keywords: ["SingularPad", "import", "export", "data", "导入", "导出", "CSV", "DXF", "KML", "SHP", "format", "points"],
+    question: "How to import/export data in SingularPad? Supported formats?",
+    answer: "**Data Import:**\n\nGo to **Project** > **Import Data**\n\n**Supported import formats:**\n- CSV, DAT, TXT, KML, XLS, XLSX\n- CASS, Local coordinates, Geodetic coordinates\n- SurvCE RW5, FG RAW, Google Earth KML\n- NETCAD, PXY, Carlson coordinate files\n- **User-defined formats** also supported\n\n**Data Export:**\n\nGo to **Project** > **Export Data**\n\n**Supported export formats:**\n- CSV, DAT, TXT, KML\n- CASS, Local Coordinates, Geodetic Coordinates\n- CAD (DXF/DWG), SHP, Google Earth KML\n- RAW, RW5, HTML, CASS feature result\n- **Measurement reports** and **stakeout reports**\n\n**Creating Custom Format:**\n1. Tap \"New\" in import/export interface\n2. Set: Format name, extension, field delimiter (comma, semicolon, space, tab)\n3. Select which elements to include (name, northing, easting, elevation, code, etc.)\n4. Preview before importing to verify format is correct\n\n**Default path:** Internal Storage / SingularPad / Import (or Export)",
+    tags: ["software", "import", "export", "data", "singularpad"]
+  },
+  {
+    id: 210, category: "rtk",
+    keywords: ["SingularPad", "static", "record", "静态", "raw data", "Rinex", "observation", "recording"],
+    question: "How to set up static recording in SingularPad?",
+    answer: "**Static Data Recording Setup:**\n\nGo to **Device** > **Static Record**\n\n**Configuration options:**\n- **Name:** Project name\n- **Point Name:** Observation point identifier\n- **Interval:** Data collection interval (seconds)\n- **Observation Time:** Duration of static session. When exceeded, a new file is automatically created\n- **Data Format:** XYZ, **Rinex 2.10**, or **Rinex 3.02**\n- **Circular Record:** When enabled, oldest files are automatically overwritten when storage is full\n- **Auto Record Static:** Automatically starts recording static data when powered on\n- **Storage Space:** Allocated memory for static data (minimum **500 MB** recommended)\n\n**Note:** When the measurement time exceeds the set observation time, the receiver automatically creates a new file to avoid overly large single files.",
+    tags: ["software", "static", "recording", "rinex", "singularpad"]
+  },
+  {
+    id: 211, category: "rtk",
+    keywords: ["SingularPad", "project", "create", "项目", "coordinate system", "投影", "ellipsoid", "geoid", "datum"],
+    question: "How to create a project and set up coordinate system in SingularPad?",
+    answer: "**Creating a New Project:**\n\n1. Go to **Project** > **Project Manager**\n2. Tap **NEW** in the lower-left corner\n3. Enter **Project Name** and select **Project Path**\n\n**Coordinate System Configuration:**\n- **Coordinate System Type:** Select the predefined system for your country/region\n- **Ellipsoid Parameter:** Define the reference ellipsoid\n- **Projection Parameter:** Set the map projection (e.g., UTM, Gauss-Kruger)\n- **Horizontal Adjustment:** Horizontal transformation parameters\n- **Vertical Adjustment:** Add a **geoid file** for height correction\n- **Local Offsets:** Fine-tune local grid offsets\n\n**Tip:** SingularPad has **predefined coordinate systems for most countries**. You can search by country name or coordinate system name to quickly find your system.\n\n**Geoid files** can be downloaded from the Trimble geoid library.",
+    tags: ["software", "project", "coordinate-system", "singularpad"]
+  },
+  {
+    id: 212, category: "rtk",
+    keywords: ["SingularPad", "stakeout", "放样", "AR", "CAD", "point", "line", "DSM", "road", "navigation"],
+    question: "How to use stakeout functions in SingularPad?",
+    answer: "**Stakeout Functions in SingularPad:**\n\n**Point Stakeout:**\n- Add points manually, from database, or import from file\n- Navigation map with directional arrow guides you to the target\n- **AR Stakeout:** Real-time visual guidance using device camera (supported on Horus, Orion One, Orion One-AR; other models use controller camera)\n- Green indicator appears when within tolerance\n\n**Line Stakeout:**\n- Add or import lines; set calculation mode, interval, and target height\n- Navigate between lines with next/previous controls\n\n**CAD Stakeout:**\n- Import .dxf or .dwg files\n- Select features to stake out — highlighted in blue\n- View feature details: length, start/end/center point\n\n**DSM Stakeout:**\n- Create a design surface from points (add manually, import, or from database)\n- System shows fill/cut values when rover is within the surface area\n- Displays \"Out of Surface!\" when rover is outside the design surface\n\n**Road Stakeout:**\n- Design road alignment with broken mileage, center line, vertical profile, cross sections, slope data\n- Supports: Stake Line by Point, Stake Road by Cross Section, Cross Section Measurement, Bridge Section, Conical Slope",
+    tags: ["software", "stakeout", "cad", "navigation", "singularpad"]
+  }
+];
+
+// ==================== SYNONYM MAP ====================
+const synonyms = {
+  "gps": ["gnss", "卫星", "定位", "positioning"],
+  "rtk": ["real time kinematic", "实时动态"],
+  "base": ["基站", "base station", "reference station", "参考站"],
+  "rover": ["移动站", "接收机", "receiver", "移动端"],
+  "accuracy": ["精度", "precision", "误差", "error", "accurate"],
+  "signal": ["信号", "connection", "连接", "link"],
+  "scanner": ["扫描仪", "lidar", "激光", "laser", "扫描"],
+  "calibration": ["校准", "标定", "校正"],
+  "setup": ["设置", "安装", "配置", "架设", "config", "configuration"],
+  "firmware": ["固件", "软件", "software", "版本", "version"],
+  "auto-steer": ["auto steer", "自动转向", "autosteer", "自动驾驶", "steering", "autopilot"],
+  "tractor": ["拖拉机", "农机", "车辆", "vehicle", "machine"],
+  "section": ["section control", "分段控制", "section shutoff"],
+};
+
+// ==================== STATE ====================
+let settings = {
+  aiProvider: "claude",
+  apiKey: "",
+  threshold: 15
+};
+
+// ==================== INIT ====================
+function init() {
+  loadSettings();
+  updateQuickQuestions();
+  document.getElementById("aiProvider").value = settings.aiProvider;
+  document.getElementById("apiKey").value = settings.apiKey;
+  document.getElementById("threshold").value = settings.threshold;
+  document.getElementById("thresholdVal").textContent = settings.threshold;
+  autoResizeTextarea();
+}
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("supportQASettings") || "{}");
+    settings = { ...settings, ...saved };
+  } catch(e) {}
+}
+
+function saveSettingsFn() {
+  settings.aiProvider = document.getElementById("aiProvider").value;
+  settings.apiKey = document.getElementById("apiKey").value;
+  settings.threshold = parseInt(document.getElementById("threshold").value);
+  localStorage.setItem("supportQASettings", JSON.stringify(settings));
+  toggleSettings();
+}
+
+// ==================== KNOWLEDGE BASE HELPERS ====================
+function getFilteredKB() {
+  return knowledgeBase;
+}
+
+function updateQuickQuestions() {
+  const container = document.getElementById("quickChips");
+  if (!container) return;
+  const picked = knowledgeBase.slice(0, 6);
+  container.innerHTML = picked.map((q, i) =>
+    `<button class="quick-item">${escapeHtml(q.question)}</button>`
+  ).join("");
+  container.querySelectorAll(".quick-item").forEach((btn, i) => {
+    btn.addEventListener("click", function() {
+      askQuick(picked[i].question);
+    });
+  });
+}
+
+// ==================== MATCHING ENGINE ====================
+function normalize(str) {
+  return str.toLowerCase().replace(/[^\w\s一-鿿]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function expandSynonyms(text) {
+  const words = text.split(/\s+/);
+  const expanded = new Set(words);
+  for (const word of words) {
+    for (const [key, vals] of Object.entries(synonyms)) {
+      if (key === word || vals.includes(word)) {
+        expanded.add(key);
+        vals.forEach(v => expanded.add(v));
+      }
+    }
+  }
+  return [...expanded];
+}
+
+function scoreMatch(query, entry) {
+  const queryTokens = expandSynonyms(normalize(query));
+  let score = 0;
+  const keywordText = entry.keywords.join(" ").toLowerCase();
+  const questionText = normalize(entry.question);
+  const combinedText = keywordText + " " + questionText;
+
+  for (const token of queryTokens) {
+    if (token.length < 2) continue;
+
+    // Exact keyword match (high weight)
+    if (entry.keywords.some(k => normalize(k) === token)) {
+      score += 20;
+    }
+    // Partial keyword match (substring)
+    else if (entry.keywords.some(k => normalize(k).includes(token) || token.includes(normalize(k)))) {
+      score += 12;
+    }
+    // Match in question text
+    else if (questionText.includes(token)) {
+      score += 8;
+    }
+    // Match anywhere in combined text
+    else if (combinedText.includes(token)) {
+      score += 4;
+    }
+
+    // Bonus for multi-character Chinese token exact match
+    if (/[一-鿿]/.test(token) && token.length >= 2) {
+      for (const kw of entry.keywords) {
+        if (kw.includes(token)) { score += 5; break; }
+      }
+    }
+  }
+
+  // Bonus: more keyword matches = higher relevance
+  const matchedKeywords = entry.keywords.filter(kw => {
+    const nkw = normalize(kw);
+    return queryTokens.some(t => nkw.includes(t) || t.includes(nkw));
+  }).length;
+  score += matchedKeywords * 3;
+
+  // Match against category name for context
+  const catNames = { rtk: "rtk gnss gps", scanner: "scanner 3d scanner lidar laser scan", agnav: "agriculture tractor navigation steering agnav auto steer guidance" };
+  if (catNames[entry.category] && queryTokens.some(t => catNames[entry.category].includes(t))) {
+    score += 2;
+  }
+
+  return score;
+}
+
+function searchKnowledgeBase(query, maxResults = 5) {
+  const filtered = getFilteredKB();
+  const scored = filtered.map(entry => ({
+    entry,
+    score: scoreMatch(query, entry)
+  }));
+
+  scored.sort((a, b) => b.score - a.score);
+
+  return {
+    top: scored.slice(0, maxResults),
+    hasGoodMatch: scored.length > 0 && scored[0].score >= settings.threshold,
+    allScored: scored
+  };
+}
+
+// ==================== AI FALLBACK ====================
+async function askAI(query) {
+  const provider = settings.aiProvider;
+  const apiKey = settings.apiKey;
+  if (!apiKey) return null;
+
+  const context = knowledgeBase.map(e =>
+    `Q: ${e.question}\nA: ${e.answer.replace(/\*\*/g, "").replace(/\n\n/g, " | ").replace(/\n/g, " ")}`
+  ).join("\n\n");
+
+  const systemPrompt = `You are a technical support assistant for RTK/GNSS positioning systems, 3D laser scanners, and agricultural machinery navigation (auto-steer) systems. Answer the user's question based on the knowledge base below. If the knowledge base doesn't cover the question, give a helpful general answer and suggest contacting the manufacturer's technical support. Keep answers structured, practical, and in the same language as the user's question.\n\n===KNOWLEDGE BASE===\n${context}`;
+
+  try {
+    if (provider === "claude") {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: [{ role: "user", content: query }]
+        })
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const data = await res.json();
+      return data.content[0].text;
+    } else if (provider === "openai") {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          max_tokens: 1024,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: query }
+          ]
+        })
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const data = await res.json();
+      return data.choices[0].message.content;
+    }
+  } catch (e) {
+    console.error("AI fallback error:", e);
+    return null;
+  }
+  return null;
+}
+
+// ==================== UI ====================
+function addMessage(type, content, extra = {}) {
+  const messages = document.getElementById("messages");
+  // Remove greeting if present
+  const greeting = messages.querySelector(".greeting");
+  if (greeting) greeting.remove();
+
+  const div = document.createElement("div");
+  div.className = `message ${type}`;
+  const avatar = type === "user" ? "👤" : "🤖";
+  div.innerHTML = `<div class="avatar">${avatar}</div><div>`;
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.innerHTML = formatMessage(content);
+
+  if (extra.confidence !== undefined && type === "bot" && extra.confidence > 0) {
+    bubble.innerHTML += `<span class="confidence">Match confidence: ${Math.round(extra.confidence * 100) / 100}%</span>`;
+  }
+
+  div.children[1].appendChild(bubble);
+
+  // Feedback buttons for bot messages
+  if (type === "bot" && extra.entryId !== undefined) {
+    const feedbackDiv = document.createElement("div");
+    feedbackDiv.className = "feedback";
+    feedbackDiv.innerHTML = `
+      <button onclick="rateAnswer(${extra.entryId}, 'helpful', this)" title="Helpful">👍 Helpful</button>
+      <button onclick="rateAnswer(${extra.entryId}, 'not-helpful', this)" title="Not helpful">👎 Not helpful</button>
+    `;
+    div.children[1].appendChild(feedbackDiv);
+  }
+
+  // Suggestions for low-confidence bot messages
+  if (type === "bot" && extra.suggestions && extra.suggestions.length > 0) {
+    const sugDiv = document.createElement("div");
+    sugDiv.className = "suggestions";
+    sugDiv.innerHTML = '<span style="font-size:12px;color:var(--text-secondary);margin-right:4px">You might also be interested in:</span>' +
+      extra.suggestions.map((s, i) => `<span class="chip" data-sugidx="${i}">${escapeHtml(s.question)}</span>`).join("");
+    sugDiv.querySelectorAll(".chip").forEach(chip => {
+      chip.addEventListener("click", function() {
+        const sug = extra.suggestions[parseInt(this.dataset.sugidx)];
+        if (sug) askQuick(sug.question);
+      });
+    });
+    div.children[1].appendChild(sugDiv);
+  }
+
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+  return div;
+}
+
+function formatMessage(text) {
+  // Convert markdown-style formatting
+  let html = escapeHtml(text);
+  html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\n/g, "<br>");
+  // Numbered lists
+  html = html.replace(/(\d+\.\s)/g, "<br>$1");
+  return html;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function addTypingIndicator() {
+  const messages = document.getElementById("messages");
+  const div = document.createElement("div");
+  div.className = "message bot";
+  div.id = "typingIndicator";
+  div.innerHTML = `<div class="avatar">🤖</div><div class="bubble" style="color:var(--text-secondary)">Typing...</div>`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById("typingIndicator");
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById("userInput");
+  const query = input.value.trim();
+  if (!query) return;
+
+  const sendBtn = document.getElementById("sendBtn");
+  sendBtn.disabled = true;
+
+  // Show user message
+  addMessage("user", query);
+  input.value = "";
+  autoResizeTextarea();
+
+  // Small delay to feel natural
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+  addTypingIndicator();
+  await new Promise(r => setTimeout(r, 300 + Math.random() * 300));
+  removeTypingIndicator();
+
+  // Search knowledge base
+  const result = searchKnowledgeBase(query);
+
+  if (result.hasGoodMatch) {
+    const best = result.top[0];
+    const formattedScore = Math.min(100, Math.round(best.score / 40 * 100));
+    addMessage("bot", best.entry.answer, {
+      entryId: best.entry.id,
+      confidence: formattedScore,
+      suggestions: result.top.slice(1, 3).map(s => s.entry)
+    });
+  } else if (result.top[0].score > 2) {
+    // Partial match — show best result + suggestions
+    const best = result.top[0];
+    addMessage("bot", `I'm not 100% sure, but this might help:\n\n${best.entry.answer}`, {
+      entryId: best.entry.id,
+      confidence: Math.min(40, Math.round(best.score / 40 * 100)),
+      suggestions: result.top.slice(1, 4).map(s => s.entry)
+    });
+  } else {
+    // No match — try AI fallback
+    if (settings.apiKey) {
+      addTypingIndicator();
+      const aiAnswer = await askAI(query);
+      removeTypingIndicator();
+      if (aiAnswer) {
+        addMessage("bot", aiAnswer, { confidence: 0 });
+      } else {
+        showNoMatch(query);
+      }
+    } else {
+      showNoMatch(query);
+    }
+  }
+
+  sendBtn.disabled = false;
+  document.getElementById("userInput").focus();
+}
+
+function showNoMatch(query) {
+  addMessage("bot",
+    `Sorry, I couldn't find a matching answer for your question.\n\n` +
+    `Suggestions:\n` +
+    `1. Try rephrasing with different keywords\n` +
+    `2. Contact technical support directly for further assistance\n\n` +
+    `You can also configure AI-powered answers in Settings for smarter responses.`,
+    { confidence: 0, entryId: -1 }
+  );
+}
+
+function askQuick(question) {
+  document.getElementById("userInput").value = question;
+  sendMessage();
+}
+
+function handleKeyDown(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResizeTextarea() {
+  const ta = document.getElementById("userInput");
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
+}
+
+// ==================== SETTINGS ====================
+function toggleSettings() {
+  const modal = document.getElementById("settingsModal");
+  modal.classList.toggle("show");
+  if (modal.classList.contains("show")) {
+    document.getElementById("aiProvider").value = settings.aiProvider;
+    document.getElementById("apiKey").value = settings.apiKey;
+    document.getElementById("threshold").value = settings.threshold;
+    document.getElementById("thresholdVal").textContent = settings.threshold;
+  }
+}
+
+function saveSettings() {
+  saveSettingsFn();
+  toggleSettings();
+}
+
+function onProviderChange() {
+  // placeholder for provider-specific hints
+}
+
+// ==================== FEEDBACK ====================
+function rateAnswer(entryId, rating, btn) {
+  const feedbackDiv = btn.parentElement;
+  feedbackDiv.querySelectorAll("button").forEach(b => {
+    b.classList.remove("liked", "disliked");
+  });
+  btn.classList.add(rating === "helpful" ? "liked" : "disliked");
+
+  // Save feedback
+  let feedback = {};
+  try { feedback = JSON.parse(localStorage.getItem("supportQAFeedback") || "{}"); } catch(e) {}
+  if (!feedback[entryId]) feedback[entryId] = { helpful: 0, notHelpful: 0 };
+  if (rating === "helpful") feedback[entryId].helpful++;
+  else feedback[entryId].notHelpful++;
+  localStorage.setItem("supportQAFeedback", JSON.stringify(feedback));
+}
+
+// ==================== CLEAR CHAT ====================
+function clearChat() {
+  const messages = document.getElementById("messages");
+  messages.innerHTML = `<div class="greeting">
+    <div class="logo">🤖</div>
+    <h3>Hello! I'm Gus, your support assistant.</h3>
+    <p>Ask me anything about RTK positioning, 3D scanners, or agricultural navigation systems. I support both English and Chinese.</p>
+    </div>`;
+}
+
+// ==================== TEXTAREA AUTO RESIZE ====================
+document.getElementById("userInput").addEventListener("input", autoResizeTextarea);
+
+// Modal close on overlay click
+document.getElementById("settingsModal").addEventListener("click", function(e) {
+  if (e.target === this) toggleSettings();
+});
+
+// Init
+init();
+</script>
+</body>
+</html>
