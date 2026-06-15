@@ -6968,7 +6968,8 @@ function setupAutoSave() {
     if (autoFileDB) persistAutoHandle();
     else openAutoFileDB().then(function() { persistAutoHandle(); });
     updateAutoSaveUI();
-    persistToFile();
+    // Sync from file first, then persist — prevents overwriting existing backup
+    syncFromAutoFile().then(function() { persistToFile(); });
   }).catch(function(e) {
     if (e.name !== "AbortError") alert("设置失败: " + e.message);
   });
@@ -6990,8 +6991,8 @@ function writeAutoFile() {
 }
 
 function syncFromAutoFile() {
-  if (!autoFileHandle) return;
-  autoFileHandle.getFile().then(function(f) {
+  if (!autoFileHandle) return Promise.resolve();
+  return autoFileHandle.getFile().then(function(f) {
     f.text().then(function(t) {
       try {
         var data = JSON.parse(t);
