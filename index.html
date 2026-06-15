@@ -7059,8 +7059,34 @@ function restoreFromLocal() {
     };
     xhr.onerror = function() { alert("无法连接自动保存服务，请确认 auto_save_server.js 已启动"); };
     xhr.send();
+  } else if (typeof window.showOpenFilePicker === "function") {
+    // FSA: open file + bind auto-save in one step
+    window.showOpenFilePicker({
+      types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+      multiple: false
+    }).then(function(handles) {
+      var h = handles[0];
+      h.getFile().then(function(f) {
+        f.text().then(function(t) {
+          try {
+            var data = JSON.parse(t);
+            if (!Array.isArray(data)) { alert("文件格式不正确"); return; }
+            mergeIntoLocal(data);
+            autoFileHandle = h;
+            autoSaveServer = "fsa";
+            autoSaveEnabled = true;
+            if (autoFileDB) persistAutoHandle();
+            else openAutoFileDB().then(function() { persistAutoHandle(); });
+            updateAutoSaveUI();
+            alert("已恢复 " + data.length + " 条记录，自动保存已绑定到该文件");
+          } catch(err) { alert("文件解析失败"); }
+        });
+      });
+    }).catch(function(e) {
+      if (e.name !== "AbortError") alert("打开文件失败: " + e.message);
+    });
   } else {
-    // Fallback: upload a backup file
+    // Fallback: plain file input (browsers without FSA)
     var input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";
@@ -7073,8 +7099,7 @@ function restoreFromLocal() {
           var data = JSON.parse(ev.target.result);
           if (!Array.isArray(data)) { alert("文件格式不正确"); return; }
           mergeIntoLocal(data);
-          persistToFile();
-          alert("已导入 " + data.length + " 条记录");
+          alert("已导入 " + data.length + " 条记录（此浏览器不支持自动保存，请手动导出备份）");
         } catch(err) { alert("文件解析失败"); }
       };
       reader.readAsText(file);
