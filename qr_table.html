@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SN 注册码二维码</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Nunito", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; padding: 20px; }
+  h2 { text-align: center; margin-bottom: 20px; color: #333; }
+  table { border-collapse: collapse; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  th, td { padding: 12px 20px; text-align: center; border-bottom: 1px solid #eee; }
+  th { background: #4a6cf7; color: #fff; font-weight: 600; font-size: 14px; }
+  td { font-size: 13px; color: #333; }
+  td.sn { font-family: monospace; font-weight: 700; font-size: 14px; }
+  td.code { font-family: monospace; font-size: 9px; color: #666; max-width: 300px; word-break: break-all; }
+  tr:hover { background: #f8f9ff; }
+  canvas { display: block; margin: 0 auto; }
+  @media print {
+    body { background: #fff; }
+    table { box-shadow: none; }
+    th { background: #4a6cf7; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<h2>SN 注册码对应表</h2>
+<table>
+  <thead>
+    <tr><th>SN</th><th>注册码</th><th>二维码</th></tr>
+  </thead>
+  <tbody id="tb"></tbody>
+</table>
+<script>
+const data = [
+  ["7126R0050", "10B501AD195D87B126DB6D1C41F21361EC2BFB417220E76F9F05C388AEF2E3ED"],
+  ["7126R0017", "10B501AD195D87B14EC7A68FD47C7CC6EC2BFB417220E76F9F05C388AEF2E3ED"],
+  ["6126R0045", "D58548ED2DB262B61E7DCA3F13C1E909EC2BFB417220E76F9F05C388AEF2E3ED"],
+  ["6126R0037", "D58548ED2DB262B6AFAD8A99A361800CEC2BFB417220E76F9F05C388AEF2E3ED"],
+  ["2126J0193", "F428BF64EC5A432858E9C5FAB1C33F89EC2BFB417220E76F9F05C388AEF2E3ED"],
+  ["2126J0160", "F428BF64EC5A43284F95E0F87AC5C15CEC2BFB417220E76F9F05C388AEF2E3ED"],
+  ["2126J0168", "F428BF64EC5A43284E3AFC53EE3E3E9BEC2BFB417220E76F9F05C388AEF2E3ED"],
+  ["2126J0173", "F428BF64EC5A4328F440518B3FAEDC67EC2BFB417220E76F9F05C388AEF2E3ED"]
+];
+const tb = document.getElementById("tb");
+data.forEach(([sn, code], i) => {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td class="sn">${sn}</td><td class="code">${code}</td><td id="qr_${i}"></td>`;
+  tb.appendChild(tr);
+  new QRCode(document.getElementById("qr_" + i), {
+    text: code,
+    width: 120,
+    height: 120,
+    colorDark: "#000",
+    colorLight: "#fff",
+    correctLevel: QRCode.CorrectLevel.M
+  });
+});
+</script>
+</body>
+</html>

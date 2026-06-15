@@ -1,0 +1,1402 @@
+[
+  {
+    "kbId": 300,
+    "blogId": 209,
+    "blogTitle": "Tech Chat | Understanding and Exporting RAW and RW5 Files in SingularPad",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/209"
+  },
+  {
+    "kbId": 301,
+    "blogId": 208,
+    "blogTitle": "Tech Chat | Understanding Implement Parameters in Precision AG",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/208"
+  },
+  {
+    "kbId": 302,
+    "blogId": 207,
+    "blogTitle": "Tech Chat | How to Use the Laser RTK Stabilizer for More Stable Laser Surveying?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/207"
+  },
+  {
+    "kbId": 303,
+    "blogId": 206,
+    "blogTitle": "Tech Chat | Understanding RTK Receiver Battery Life in Different Work Modes",
+    "score": 0.771,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/206"
+  },
+  {
+    "kbId": 304,
+    "blogId": 205,
+    "blogTitle": "Tech Chat | Aluminum Plate vs Tribrach: Which One to Use for RTK Base Setup?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/205"
+  },
+  {
+    "kbId": 305,
+    "blogId": 204,
+    "blogTitle": "Tech Chat | TCP vs UDP in RTK: What’s the Difference and Which Should You Choose?",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/204"
+  },
+  {
+    "kbId": 306,
+    "blogId": 203,
+    "blogTitle": "Tech Chat | How to Extract Points from CAD Drawings in SingularPad?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/203"
+  },
+  {
+    "kbId": 307,
+    "blogId": 202,
+    "blogTitle": "Tech Chat | Using Photo & Sketch for Point Documentation in SingularPad",
+    "score": 0.5,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/202"
+  },
+  {
+    "kbId": 308,
+    "blogId": 201,
+    "blogTitle": "How to Set Up and Use ISOBUS in SAgro200 Autosteer Software?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/201"
+  },
+  {
+    "kbId": 309,
+    "blogId": 200,
+    "blogTitle": "Tech Chat | How to Manually Import Coordinate System Parameters in SingularPad?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/200"
+  },
+  {
+    "kbId": 310,
+    "blogId": 199,
+    "blogTitle": "Tech Chat | How to Calibrate CAD Basemap in SingularPad?",
+    "score": 0.88,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/199"
+  },
+  {
+    "kbId": 311,
+    "blogId": 198,
+    "blogTitle": "Tech Chat | How to Measure and Import Plots into Autosteer Systems?",
+    "score": 0.829,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/198"
+  },
+  {
+    "kbId": 312,
+    "blogId": 182,
+    "blogTitle": "Tech Chat | How to Configure Z1 as a Network Base Station?",
+    "score": 0.733,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/182"
+  },
+  {
+    "kbId": 313,
+    "blogId": 196,
+    "blogTitle": "Tech Chat | Steps for Upgrading the H1 Scanner System Firmware",
+    "score": 0.64,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/196"
+  },
+  {
+    "kbId": 314,
+    "blogId": 195,
+    "blogTitle": "Tech Chat | How to Use the Volume Calculation Function in SingularPad",
+    "score": 0.85,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/195"
+  },
+  {
+    "kbId": 315,
+    "blogId": 194,
+    "blogTitle": "Tech Chat | How to Enable RTK Positioning For H1 Point Cloud Scanning",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/194"
+  },
+  {
+    "kbId": 316,
+    "blogId": 200,
+    "blogTitle": "Tech Chat | How to Manually Import Coordinate System Parameters in SingularPad?",
+    "score": 0.461,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/200"
+  },
+  {
+    "kbId": 317,
+    "blogId": 37,
+    "blogTitle": "Tech Chat | How to Resolve Stuck or Crashing Issues in Autosteer Software?",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/37"
+  },
+  {
+    "kbId": 318,
+    "blogId": 191,
+    "blogTitle": "Tech Chat | RTK vs PPK: Key Differences in Data Processing & Accuracy",
+    "score": 0.743,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/191"
+  },
+  {
+    "kbId": 319,
+    "blogId": 190,
+    "blogTitle": "Tech Chat | How to Perform Auto Point Survey Using SingularPad",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/190"
+  },
+  {
+    "kbId": 320,
+    "blogId": 189,
+    "blogTitle": "Tech Chat | STSA9 Total Station Function Introduction — ColumnOffs",
+    "score": 0.743,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/189"
+  },
+  {
+    "kbId": 321,
+    "blogId": 188,
+    "blogTitle": "Tech Chat | How to Choose the Correct Model Type in T8 Pro",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/188"
+  },
+  {
+    "kbId": 322,
+    "blogId": 187,
+    "blogTitle": "Tech Chat | Common Configuration Commands for the S20 Smart Antenna",
+    "score": 0.914,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/187"
+  },
+  {
+    "kbId": 323,
+    "blogId": 186,
+    "blogTitle": "Tech Chat | Configure X1 Lite GNSS Receiver as a Network Base",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/186"
+  },
+  {
+    "kbId": 324,
+    "blogId": 185,
+    "blogTitle": "Tech Chat | Mastering Laser Surveying on Horus with Camera-Aided Targeting",
+    "score": 0.829,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/185"
+  },
+  {
+    "kbId": 325,
+    "blogId": 184,
+    "blogTitle": "Tech Chat | Understanding UTM Zones in GNSS Surveying",
+    "score": 0.64,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/184"
+  },
+  {
+    "kbId": 326,
+    "blogId": 183,
+    "blogTitle": "Tech Chat | Troubleshooting Common Issues in Built-in Radio Mode",
+    "score": 0.625,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/183"
+  },
+  {
+    "kbId": 327,
+    "blogId": 181,
+    "blogTitle": "Tech Chat | SAgro-Series Autosteer Kit Tips (Part 2): Common Vehicle Autosteer Parameters",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/181"
+  },
+  {
+    "kbId": 328,
+    "blogId": 180,
+    "blogTitle": "Tech Chat | SAgro-Series Autosteer Kit Tips (Part 1): Vehicle Model Setup Explained",
+    "score": 0.667,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/180"
+  },
+  {
+    "kbId": 329,
+    "blogId": 179,
+    "blogTitle": "Tech Chat | How to Setup the Y1 GNSS Receiver as a Drone Base",
+    "score": 0.88,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/179"
+  },
+  {
+    "kbId": 330,
+    "blogId": 178,
+    "blogTitle": "Tech Chat | How to Download Static Data via FTP",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/178"
+  },
+  {
+    "kbId": 331,
+    "blogId": 177,
+    "blogTitle": "Tech Chat | Setting Up X1 GNSS as a Drone Base Station with SingularPad",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/177"
+  },
+  {
+    "kbId": 332,
+    "blogId": 176,
+    "blogTitle": "Tech Chat | How to Configure the S20 as a CORS Reference Station",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/176"
+  },
+  {
+    "kbId": 333,
+    "blogId": 175,
+    "blogTitle": "Tech Chat | When & Why to Use Calibration Point (Grid Shift)",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/175"
+  },
+  {
+    "kbId": 334,
+    "blogId": 174,
+    "blogTitle": "Tech Chat | Understanding Skyplots in GNSS Workflows",
+    "score": 0.55,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/174"
+  },
+  {
+    "kbId": 335,
+    "blogId": 173,
+    "blogTitle": "Tech Chat | Three Stakeout Reference Methods in SingularPad Explained",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/173"
+  },
+  {
+    "kbId": 336,
+    "blogId": 172,
+    "blogTitle": "Tech Chat | How to Read and Use NGS Antenna Calibration Files (ANTEX & ANTINFO)",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/172"
+  },
+  {
+    "kbId": 337,
+    "blogId": 171,
+    "blogTitle": "Tech Chat | Common Data Collector Problems and How to Solve Them",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/171"
+  },
+  {
+    "kbId": 338,
+    "blogId": 169,
+    "blogTitle": "Tech Chat | GNSS Antenna Calibration Explained – And What NGS Certification Really Means",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/169"
+  },
+  {
+    "kbId": 339,
+    "blogId": 65,
+    "blogTitle": "Tech Chat | Line-related surveying tasks in SingularPad – Part 1",
+    "score": 0.48,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/65"
+  },
+  {
+    "kbId": 340,
+    "blogId": 168,
+    "blogTitle": "X1 GNSS Receiver",
+    "score": 0.4,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/168"
+  },
+  {
+    "kbId": 341,
+    "blogId": 125,
+    "blogTitle": "Tech Chat | A Convenient Function for GIS – SingularPad Zigzag",
+    "score": 0.44,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/125"
+  },
+  {
+    "kbId": 342,
+    "blogId": 166,
+    "blogTitle": "Tech Chat | Common U-Turn Methods in Auto-Steering Systems",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/166"
+  },
+  {
+    "kbId": 343,
+    "blogId": 11,
+    "blogTitle": "Tech Chat - What is RTCM format in RTK correction data transmission?",
+    "score": 0.52,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/11"
+  },
+  {
+    "kbId": 344,
+    "blogId": 163,
+    "blogTitle": "Tech Chat | How to Stakeout Points Using Azimuth & Distance",
+    "score": 0.829,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/163"
+  },
+  {
+    "kbId": 345,
+    "blogId": 162,
+    "blogTitle": "Test Report | SV100 INS Series Performance Field Test Under Diverse Environments",
+    "score": 0.55,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/162"
+  },
+  {
+    "kbId": 346,
+    "blogId": 161,
+    "blogTitle": "Tech Chat | Understanding The Communication Interfaces in RTK GNSS Receivers",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/161"
+  },
+  {
+    "kbId": 347,
+    "blogId": 160,
+    "blogTitle": "Tech Chat | Understanding Main Functional Modules in RTK GNSS Receivers",
+    "score": 0.771,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/160"
+  },
+  {
+    "kbId": 350,
+    "blogId": 210,
+    "blogTitle": "Tech Chat | Horus Visual Survey Workflow and Important Considerations",
+    "score": 0.833,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/210"
+  },
+  {
+    "kbId": 351,
+    "blogId": 159,
+    "blogTitle": "Tech Chat | How to Activate PPP in Your Auto-Steering System",
+    "score": 0.66,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/159"
+  },
+  {
+    "kbId": 352,
+    "blogId": 158,
+    "blogTitle": "Tech Chat | An Easy Way of Setting Projected Coordinate Systems – RTCM 1021-1027 Messages",
+    "score": 0.711,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/158"
+  },
+  {
+    "kbId": 353,
+    "blogId": 157,
+    "blogTitle": "Tech Chat | How to judge the waterproof performance of products? - IP67/IPXX",
+    "score": 0.5,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/157"
+  },
+  {
+    "kbId": 354,
+    "blogId": 156,
+    "blogTitle": "Tech Chat | What services can GNSS provide?",
+    "score": 0.567,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/156"
+  },
+  {
+    "kbId": 355,
+    "blogId": 155,
+    "blogTitle": "Tech Chat | How accurate is your GNSS device? – DOP Indicators",
+    "score": 0.514,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/155"
+  },
+  {
+    "kbId": 356,
+    "blogId": 154,
+    "blogTitle": "Tech Chat | What’s the time now? – UTC and GPS Time",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/154"
+  },
+  {
+    "kbId": 357,
+    "blogId": 153,
+    "blogTitle": "Tech Chat | A Way to Enhance GNSS Signal Tracking - Regional Satellite Systems",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/153"
+  },
+  {
+    "kbId": 358,
+    "blogId": 152,
+    "blogTitle": "Tech Chat | What is RINEX?",
+    "score": 0.52,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/152"
+  },
+  {
+    "kbId": 359,
+    "blogId": 151,
+    "blogTitle": "Tech Chat | How does CORS work?",
+    "score": 0.55,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/151"
+  },
+  {
+    "kbId": 360,
+    "blogId": 150,
+    "blogTitle": "Tech Chat | Projected Coordinate Systems - Malaysia Datum introduction",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/150"
+  },
+  {
+    "kbId": 362,
+    "blogId": 149,
+    "blogTitle": "Tech Chat - What is Localization in Surveying Project?",
+    "score": 0.573,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/149"
+  },
+  {
+    "kbId": 363,
+    "blogId": 148,
+    "blogTitle": "Tech Chat | Which is better among Static Survey, RTK or PPK?",
+    "score": 0.686,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/148"
+  },
+  {
+    "kbId": 364,
+    "blogId": 147,
+    "blogTitle": "Tech Chat | What is LoRa?",
+    "score": 0.5,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/147"
+  },
+  {
+    "kbId": 365,
+    "blogId": 57,
+    "blogTitle": "Tech Chat | How to Set Up DDNS for Remote Management of SV100 CORS Stations?",
+    "score": 0.733,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/57"
+  },
+  {
+    "kbId": 366,
+    "blogId": 145,
+    "blogTitle": "Tech Chat | What is NAT-DDNS?",
+    "score": 0.5,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/145"
+  },
+  {
+    "kbId": 367,
+    "blogId": 144,
+    "blogTitle": "Tech Chat | Why do most tractors have smaller front wheels and larger back wheels?",
+    "score": 0.627,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/144"
+  },
+  {
+    "kbId": 368,
+    "blogId": 124,
+    "blogTitle": "Tech Chat | How accurate can GNSS achieve without base stations?",
+    "score": 0.5,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/124"
+  },
+  {
+    "kbId": 369,
+    "blogId": 142,
+    "blogTitle": "Tech Chat | How does angle sensor work?",
+    "score": 0.56,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/142"
+  },
+  {
+    "kbId": 370,
+    "blogId": 141,
+    "blogTitle": "Tech Chat | What is RTK bridge & how to use it?",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/141"
+  },
+  {
+    "kbId": 371,
+    "blogId": 140,
+    "blogTitle": "FAQ | Y1 GNSS Receiver – Part 1 Radio Mode",
+    "score": 0.629,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/140"
+  },
+  {
+    "kbId": 372,
+    "blogId": 39,
+    "blogTitle": "Tech Chat | STRSVR: A Key Tool for GNSS Data Transfer and Debugging",
+    "score": 0.4,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/39"
+  },
+  {
+    "kbId": 373,
+    "blogId": 138,
+    "blogTitle": "FAQ | Y1 GNSS Receiver – Part 3 GSM/4G Mode",
+    "score": 0.567,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/138"
+  },
+  {
+    "kbId": 374,
+    "blogId": 137,
+    "blogTitle": "Tech Chat | How To Site A CORS Station?",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/137"
+  },
+  {
+    "kbId": 375,
+    "blogId": 136,
+    "blogTitle": "Tech Chat | How an articulated tractor works & its applicable scenarios",
+    "score": 0.533,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/136"
+  },
+  {
+    "kbId": 376,
+    "blogId": 135,
+    "blogTitle": "Application of Engineering Survey Technology in Building Construction",
+    "score": 0.675,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/135"
+  },
+  {
+    "kbId": 377,
+    "blogId": 134,
+    "blogTitle": "Tech Chat | Which should I choose? - Total stations VS GNSS RTK receivers",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/134"
+  },
+  {
+    "kbId": 378,
+    "blogId": 192,
+    "blogTitle": "Tech Chat | Exporting and Importing AB Line Data in SAgro-Series Auto-Steering Software",
+    "score": 0.433,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/192"
+  },
+  {
+    "kbId": 379,
+    "blogId": 132,
+    "blogTitle": "Tech Chat | How to quickly center and level the total station?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/132"
+  },
+  {
+    "kbId": 380,
+    "blogId": 131,
+    "blogTitle": "Tech Chat | An optimal solution for single continuous operation base station",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/131"
+  },
+  {
+    "kbId": 381,
+    "blogId": 130,
+    "blogTitle": "Tech Chat | What’s the difference between GNSS land leveling and laser land leveling?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/130"
+  },
+  {
+    "kbId": 382,
+    "blogId": 129,
+    "blogTitle": "Tech Chat | What is NTRIP Caster?",
+    "score": 0.667,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/129"
+  },
+  {
+    "kbId": 383,
+    "blogId": 128,
+    "blogTitle": "Tech Chat | How to make your RTK work with GIS software?",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/128"
+  },
+  {
+    "kbId": 384,
+    "blogId": 127,
+    "blogTitle": "Tech Chat | How to build your CORS platform for free? – Chapter 1",
+    "score": 0.625,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/127"
+  },
+  {
+    "kbId": 385,
+    "blogId": 126,
+    "blogTitle": "Tech Chat | How to build your CORS platform for free? – Chapter 2",
+    "score": 0.5,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/126"
+  },
+  {
+    "kbId": 386,
+    "blogId": 125,
+    "blogTitle": "Tech Chat | A Convenient Function for GIS – SingularPad Zigzag",
+    "score": 0.51,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/125"
+  },
+  {
+    "kbId": 387,
+    "blogId": 124,
+    "blogTitle": "Tech Chat | How accurate can GNSS achieve without base stations?",
+    "score": 0.616,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/124"
+  },
+  {
+    "kbId": 388,
+    "blogId": 123,
+    "blogTitle": "Tech Chat | How to simplify your total station stakeout?",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/123"
+  },
+  {
+    "kbId": 389,
+    "blogId": 122,
+    "blogTitle": "Tech Chat | How to build a CORS station? – Chapter 1",
+    "score": 0.45,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/122"
+  },
+  {
+    "kbId": 390,
+    "blogId": 121,
+    "blogTitle": "Tech Chat | How to build a CORS station? – Chapter 2",
+    "score": 0.533,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/121"
+  },
+  {
+    "kbId": 391,
+    "blogId": 120,
+    "blogTitle": "Tech Chat | How to combine total station & RTK receiver surveying?",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/120"
+  },
+  {
+    "kbId": 392,
+    "blogId": 119,
+    "blogTitle": "Tech Chat | How to make your RTK work with Mobile Topographer?",
+    "score": 0.475,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/119"
+  },
+  {
+    "kbId": 393,
+    "blogId": 118,
+    "blogTitle": "Tech Chat – What’s the difference between RTK & RTD?",
+    "score": 0.743,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/118"
+  },
+  {
+    "kbId": 394,
+    "blogId": 117,
+    "blogTitle": "Tech Chat | How to build your CORS server for free with Alibaba Cloud?",
+    "score": 0.914,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/117"
+  },
+  {
+    "kbId": 395,
+    "blogId": 116,
+    "blogTitle": "Tech Chat | Should I Choose A Choke Ring Antenna For My Reference Station?",
+    "score": 0.925,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/116"
+  },
+  {
+    "kbId": 396,
+    "blogId": 115,
+    "blogTitle": "Tech Chat | How to measure AB guidance line for auto-steering systems?",
+    "score": 0.733,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/115"
+  },
+  {
+    "kbId": 397,
+    "blogId": 114,
+    "blogTitle": "Tech Chat | How do solar storms affect RTK surveying?",
+    "score": 0.833,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/114"
+  },
+  {
+    "kbId": 398,
+    "blogId": 113,
+    "blogTitle": "Tech Chat | How to make your surveying more accurate? – Importance of Grid Shift",
+    "score": 0.491,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/113"
+  },
+  {
+    "kbId": 399,
+    "blogId": 112,
+    "blogTitle": "Tech Chat | How to test the accuracy of IMU?",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/112"
+  },
+  {
+    "kbId": 400,
+    "blogId": 111,
+    "blogTitle": "Tech Chat | What are the sources of RTK errors and how to avoid them?",
+    "score": 0.68,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/111"
+  },
+  {
+    "kbId": 401,
+    "blogId": 110,
+    "blogTitle": "Tech Chat | What is VRS and its advantages?",
+    "score": 0.475,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/110"
+  },
+  {
+    "kbId": 402,
+    "blogId": 109,
+    "blogTitle": "Tech Chat | How to test the RTK performance?",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/109"
+  },
+  {
+    "kbId": 403,
+    "blogId": 108,
+    "blogTitle": "Tech Chat | How can SAgro100 be compatible with most tractors? – Importance of Spline Sleeves",
+    "score": 0.578,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/108"
+  },
+  {
+    "kbId": 404,
+    "blogId": 107,
+    "blogTitle": "FAQ | SAgro100 Auto-Steering System – Part 1 Signal Connection",
+    "score": 0.714,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/107"
+  },
+  {
+    "kbId": 405,
+    "blogId": 106,
+    "blogTitle": "FAQ | SAgro100 Auto-Steering System – Part 2 Auto-Steering",
+    "score": 0.543,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/106"
+  },
+  {
+    "kbId": 406,
+    "blogId": 105,
+    "blogTitle": "Tech Chat | How to set up SV100 as a portable base?",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/105"
+  },
+  {
+    "kbId": 407,
+    "blogId": 104,
+    "blogTitle": "FAQ | SAgro100 Auto-Steering System – Part 3 Auto-Steering",
+    "score": 0.5,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/104"
+  },
+  {
+    "kbId": 408,
+    "blogId": 103,
+    "blogTitle": "Tech Chat | Which RTK Rover is Right for you? – Differences between SingularXYZ Rovers",
+    "score": 0.577,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/103"
+  },
+  {
+    "kbId": 409,
+    "blogId": 102,
+    "blogTitle": "Tech Chat | How to conduct PPK survey tasks? – Part 1",
+    "score": 0.657,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/102"
+  },
+  {
+    "kbId": 410,
+    "blogId": 101,
+    "blogTitle": "Tech Chat | How to calculate & divide the plot area based on measured/known points?",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/101"
+  },
+  {
+    "kbId": 411,
+    "blogId": 99,
+    "blogTitle": "Tech Chat | What is attitude sensor and how does it work?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/99"
+  },
+  {
+    "kbId": 412,
+    "blogId": 98,
+    "blogTitle": "Tech Chat | How to set SV100 as a base with a router?",
+    "score": 0.85,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/98"
+  },
+  {
+    "kbId": 413,
+    "blogId": 97,
+    "blogTitle": "Tech Chat | How to conduct static measurement via web page?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/97"
+  },
+  {
+    "kbId": 414,
+    "blogId": 96,
+    "blogTitle": "Tech Chat | What’s the difference between geodetic height, normal height and ortho-height?",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/96"
+  },
+  {
+    "kbId": 415,
+    "blogId": 95,
+    "blogTitle": "Tech Chat | Mastering Road Stakeout with SingularPad – Part 1",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/95"
+  },
+  {
+    "kbId": 416,
+    "blogId": 198,
+    "blogTitle": "Tech Chat | How to Measure and Import Plots into Autosteer Systems?",
+    "score": 0.459,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/198"
+  },
+  {
+    "kbId": 417,
+    "blogId": 93,
+    "blogTitle": "Tech Chat | How to adjust project coordinates when the base changes?",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/93"
+  },
+  {
+    "kbId": 418,
+    "blogId": 92,
+    "blogTitle": "Tech Chat | What is geoid model and how to use it?",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/92"
+  },
+  {
+    "kbId": 419,
+    "blogId": 91,
+    "blogTitle": "Tech Chat | Mastering Road Stakeout with SingularPad – Part 2",
+    "score": 0.633,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/91"
+  },
+  {
+    "kbId": 420,
+    "blogId": 90,
+    "blogTitle": "Tech Chat | What is #Heading Data?",
+    "score": 0.56,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/90"
+  },
+  {
+    "kbId": 421,
+    "blogId": 89,
+    "blogTitle": "Tech Chat | Common NMEA Messages Used in RTK Devices",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/89"
+  },
+  {
+    "kbId": 422,
+    "blogId": 87,
+    "blogTitle": "Tech Chat | Coordinate Forward & Inverse Calculations in Surveying and Mapping",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/87"
+  },
+  {
+    "kbId": 423,
+    "blogId": 86,
+    "blogTitle": "Tech Chat | Mastering RTK Radio Mode Setup for Seamless Surveys",
+    "score": 0.557,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/86"
+  },
+  {
+    "kbId": 424,
+    "blogId": 85,
+    "blogTitle": "Tech Chat | Introducing SingularConverter: Easier RINEX Data Conversion",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/85"
+  },
+  {
+    "kbId": 425,
+    "blogId": 96,
+    "blogTitle": "Tech Chat | What’s the difference between geodetic height, normal height and ortho-height?",
+    "score": 0.425,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/96"
+  },
+  {
+    "kbId": 426,
+    "blogId": 80,
+    "blogTitle": "Tech Chat | Choosing the Suitable Autosteer System for Your Farming Needs",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/80"
+  },
+  {
+    "kbId": 427,
+    "blogId": 78,
+    "blogTitle": "Tech Chat | What is Datum? – Part 2 Explore Local Datums",
+    "score": 0.62,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/78"
+  },
+  {
+    "kbId": 428,
+    "blogId": 77,
+    "blogTitle": "Tech Chat | Enhancing Teamwork: Sharing Coordinate System Parameters in SingularPad Software",
+    "score": 0.633,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/77"
+  },
+  {
+    "kbId": 429,
+    "blogId": 76,
+    "blogTitle": "Tech Chat | What is Galileo High Accuracy Service (HAS)?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/76"
+  },
+  {
+    "kbId": 430,
+    "blogId": 75,
+    "blogTitle": "Tech Chat | How to Use Galileo HAS?",
+    "score": 0.55,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/75"
+  },
+  {
+    "kbId": 431,
+    "blogId": 74,
+    "blogTitle": "Tech Chat | How to Use Receiver IMU as a Compass for Stakeout?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/74"
+  },
+  {
+    "kbId": 432,
+    "blogId": 73,
+    "blogTitle": "Tech Chat | Choose Your Right One - Exploring SingularXYZ GNSS Receiver Lineup",
+    "score": 0.762,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/73"
+  },
+  {
+    "kbId": 433,
+    "blogId": 72,
+    "blogTitle": "Tech Chat | How to Add Attributes to Measured Features During Surveys",
+    "score": 0.914,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/72"
+  },
+  {
+    "kbId": 434,
+    "blogId": 71,
+    "blogTitle": "Tech Chat | How To Choose An Ideal Cloud Server For Your CORS Software?",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/71"
+  },
+  {
+    "kbId": 435,
+    "blogId": 70,
+    "blogTitle": "Tech Chat | How To Measure & Set the Height of RTK Base Station?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/70"
+  },
+  {
+    "kbId": 436,
+    "blogId": 151,
+    "blogTitle": "Tech Chat | How does CORS work?",
+    "score": 0.595,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/151"
+  },
+  {
+    "kbId": 437,
+    "blogId": 68,
+    "blogTitle": "Tech Chat | How to record static data when the receiver is working as RTK Base?",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/68"
+  },
+  {
+    "kbId": 438,
+    "blogId": 67,
+    "blogTitle": "Tech Chat | Maximizing Stakeout Efficiency with SingularPad's AR Integration",
+    "score": 0.633,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/67"
+  },
+  {
+    "kbId": 439,
+    "blogId": 66,
+    "blogTitle": "Tech Chat | How to Tackle CORS Coverage Gaps via SingularXYZ Caster?",
+    "score": 0.771,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/66"
+  },
+  {
+    "kbId": 440,
+    "blogId": 65,
+    "blogTitle": "Tech Chat | Line-related surveying tasks in SingularPad – Part 1",
+    "score": 0.442,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/65"
+  },
+  {
+    "kbId": 441,
+    "blogId": 64,
+    "blogTitle": "FAQ | SingularXYZ TS1000 Total Station – Part 1 Basic Settings",
+    "score": 0.9,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/64"
+  },
+  {
+    "kbId": 442,
+    "blogId": 63,
+    "blogTitle": "Tech Chat | How to Set & Calibrate Base Maps for Your Surveying Tasks?",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/63"
+  },
+  {
+    "kbId": 443,
+    "blogId": 62,
+    "blogTitle": "Tech Chat | Compatibility of SAgro-Series Autosteer Kits & Real User Cases",
+    "score": 0.667,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/62"
+  },
+  {
+    "kbId": 444,
+    "blogId": 61,
+    "blogTitle": "Tech Chat | Line-related surveying tasks in SingularPad – Part 2 Stakeout",
+    "score": 0.633,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/61"
+  },
+  {
+    "kbId": 445,
+    "blogId": 60,
+    "blogTitle": "Tech Chat | Difference Between Azimuth and Bearing in Land Surveying",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/60"
+  },
+  {
+    "kbId": 446,
+    "blogId": 59,
+    "blogTitle": "Tech Chat | How to Use U-Turn Function in SAgro-Series Autosteer Kits?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/59"
+  },
+  {
+    "kbId": 447,
+    "blogId": 58,
+    "blogTitle": "Tech Chat | How to Use the Demo Mode of Our SAgro-Series Systems?",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/58"
+  },
+  {
+    "kbId": 448,
+    "blogId": 57,
+    "blogTitle": "Tech Chat | How to Set Up DDNS for Remote Management of SV100 CORS Stations?",
+    "score": 0.85,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/57"
+  },
+  {
+    "kbId": 449,
+    "blogId": 56,
+    "blogTitle": "Tech Chat | Setting Up a Base Station for Drone Operations via Receiver’s Caster",
+    "score": 0.711,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/56"
+  },
+  {
+    "kbId": 450,
+    "blogId": 55,
+    "blogTitle": "FAQ | SingularXYZ TS1000 Total Station – Part 2 Data Import and Export",
+    "score": 0.85,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/55"
+  },
+  {
+    "kbId": 451,
+    "blogId": 54,
+    "blogTitle": "Test Report | Sfaira ONE Performance in Different Environments",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/54"
+  },
+  {
+    "kbId": 452,
+    "blogId": 53,
+    "blogTitle": "Tech Chat | Evaluating RTK Accuracy in Different Dimensions",
+    "score": 0.88,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/53"
+  },
+  {
+    "kbId": 453,
+    "blogId": 52,
+    "blogTitle": "Tech Chat | Tips for Setting Up a Reliable Base Station",
+    "score": 0.771,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/52"
+  },
+  {
+    "kbId": 454,
+    "blogId": 51,
+    "blogTitle": "Tech Chat | What is APN & How To Setup in SingularXYZ Products?",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/51"
+  },
+  {
+    "kbId": 455,
+    "blogId": 50,
+    "blogTitle": "FAQ | SingularXYZ TS1000 Total Station – Part 3 Data Format Conversion",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/50"
+  },
+  {
+    "kbId": 456,
+    "blogId": 49,
+    "blogTitle": "Tech Chat | How to Get NMEA Messages from SAgro-Series Autosteer Kits",
+    "score": 0.914,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/49"
+  },
+  {
+    "kbId": 457,
+    "blogId": 48,
+    "blogTitle": "Tech Chat | Understanding Antenna Phase Center & Its Calculation",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/48"
+  },
+  {
+    "kbId": 458,
+    "blogId": 47,
+    "blogTitle": "FAQ | SingularXYZ TS1000 Total Station – Part 4 Station Occupation",
+    "score": 0.743,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/47"
+  },
+  {
+    "kbId": 459,
+    "blogId": 46,
+    "blogTitle": "Tech Chat | How to Build a Personal Server for SingularCaster CORS Software",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/46"
+  },
+  {
+    "kbId": 460,
+    "blogId": 45,
+    "blogTitle": "Tech Chat | Simplifying Photovoltaic Stake-Out with SingularPad",
+    "score": 0.88,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/45"
+  },
+  {
+    "kbId": 461,
+    "blogId": 44,
+    "blogTitle": "Tech Chat | Understanding LAN, Public, and Static IPs in CORS Setup",
+    "score": 0.85,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/44"
+  },
+  {
+    "kbId": 462,
+    "blogId": 43,
+    "blogTitle": "FAQ | SingularXYZ TS1000 Total Station - Part 5 Solution of Data Conversion lssues",
+    "score": 0.731,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/43"
+  },
+  {
+    "kbId": 463,
+    "blogId": 42,
+    "blogTitle": "Tech Chat | Understanding NMEA Messages: Key to High-Precision Positioning",
+    "score": 0.914,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/42"
+  },
+  {
+    "kbId": 464,
+    "blogId": 41,
+    "blogTitle": "FAQ | Troubleshooting Common Issues with SingularCaster Software",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/41"
+  },
+  {
+    "kbId": 465,
+    "blogId": 40,
+    "blogTitle": "Tech Chat | How to Activate SingularPad Software and Common Registration FAQs",
+    "score": 0.829,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/40"
+  },
+  {
+    "kbId": 466,
+    "blogId": 39,
+    "blogTitle": "Tech Chat | STRSVR: A Key Tool for GNSS Data Transfer and Debugging",
+    "score": 0.704,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/39"
+  },
+  {
+    "kbId": 467,
+    "blogId": 38,
+    "blogTitle": "Tech Chat | Understanding The Meaning & Accuracy of Common RTK Solutions",
+    "score": 0.475,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/38"
+  },
+  {
+    "kbId": 468,
+    "blogId": 37,
+    "blogTitle": "Tech Chat | How to Resolve Stuck or Crashing Issues in Autosteer Software?",
+    "score": 0.595,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/37"
+  },
+  {
+    "kbId": 469,
+    "blogId": 36,
+    "blogTitle": "Tech Chat | How to Obtain GNSS Static Data With Sfaira ONE Series?",
+    "score": 0.914,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/36"
+  },
+  {
+    "kbId": 470,
+    "blogId": 35,
+    "blogTitle": "Tech Chat | How to Enable SBAS and PPP Mode on Sfaira ONE Series",
+    "score": 0.829,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/35"
+  },
+  {
+    "kbId": 471,
+    "blogId": 34,
+    "blogTitle": "Tech Chat | How to Upgrade SingularCaster Software",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/34"
+  },
+  {
+    "kbId": 472,
+    "blogId": 33,
+    "blogTitle": "Tech Chat | Understanding Different Angle Units in Total Station Surveying",
+    "score": 0.625,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/33"
+  },
+  {
+    "kbId": 473,
+    "blogId": 32,
+    "blogTitle": "Tech Chat | How to Add and Connect Devices to the SingularThings IoT Platform?",
+    "score": 1,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/32"
+  },
+  {
+    "kbId": 474,
+    "blogId": 31,
+    "blogTitle": "FAQ | Common Questions About Orion ONE Laser Surveying",
+    "score": 0.567,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/31"
+  },
+  {
+    "kbId": 475,
+    "blogId": 30,
+    "blogTitle": "SingularXYZ FAQ | Orion ONE's Laser, AR & Performance Features Explained",
+    "score": 0.62,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/30"
+  },
+  {
+    "kbId": 476,
+    "blogId": 29,
+    "blogTitle": "Tech Chat | Mastering Laser Surveying with Orion ONE",
+    "score": 0.643,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/29"
+  },
+  {
+    "kbId": 477,
+    "blogId": 28,
+    "blogTitle": "Tech Chat | Mastering Visual AR Stakeout with Orion ONE",
+    "score": 0.85,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/28"
+  },
+  {
+    "kbId": 478,
+    "blogId": 27,
+    "blogTitle": "Tech Chat | Choose Your RTK - 2025 SingularXYZ GNSS Receiver Lineup Comparison",
+    "score": 0.725,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/27"
+  },
+  {
+    "kbId": 479,
+    "blogId": 26,
+    "blogTitle": "Tech Chat | How to Transfer Your SingularPad License to a New Device?",
+    "score": 0.88,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/26"
+  },
+  {
+    "kbId": 480,
+    "blogId": 25,
+    "blogTitle": "Tech Chat | How to Access the Web Page of Z1 GNSS Receiver?",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/25"
+  },
+  {
+    "kbId": 481,
+    "blogId": 24,
+    "blogTitle": "Tech Chat | How to Efficiently Manage Tasks Across Different Farms and Plots?",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/24"
+  },
+  {
+    "kbId": 482,
+    "blogId": 23,
+    "blogTitle": "Tech Chat | Resolving Coordinates Mismatches in RTK Surveying & Stakeout",
+    "score": 0.5,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/23"
+  },
+  {
+    "kbId": 483,
+    "blogId": 21,
+    "blogTitle": "Tech Chat | How To Read Receiver Status from the Front Panel?",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/21"
+  },
+  {
+    "kbId": 484,
+    "blogId": 20,
+    "blogTitle": "Tech Chat | Choose the Right GIS Work Mode for Your Needs",
+    "score": 0.743,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/20"
+  },
+  {
+    "kbId": 485,
+    "blogId": 19,
+    "blogTitle": "Tech Chat | Understanding the PTL Function in Total Stations",
+    "score": 0.686,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/19"
+  },
+  {
+    "kbId": 486,
+    "blogId": 28,
+    "blogTitle": "Tech Chat | Mastering Visual AR Stakeout with Orion ONE",
+    "score": 0.468,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/28"
+  },
+  {
+    "kbId": 487,
+    "blogId": 17,
+    "blogTitle": "Tech Chat | Laser Stakeout - A Quick, Contact-Free Way to Verify Points",
+    "score": 0.657,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/17"
+  },
+  {
+    "kbId": 488,
+    "blogId": 16,
+    "blogTitle": "Tech Chat | What Affects Your RTK Fix Rate? — and How to Improve It",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/16"
+  },
+  {
+    "kbId": 489,
+    "blogId": 15,
+    "blogTitle": "Tech Chat | Analysis of GNSS Frequency Bands and Multi-Frequency Technology",
+    "score": 0.843,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/15"
+  },
+  {
+    "kbId": 490,
+    "blogId": 14,
+    "blogTitle": "Tech Chat | Setting Up RTCM Output on the S20 Smart Antenna Base Station",
+    "score": 0.925,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/14"
+  },
+  {
+    "kbId": 491,
+    "blogId": 13,
+    "blogTitle": "Tech Chat | What are the Main GNSS Antenna Types & Their Uses",
+    "score": 0.76,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/13"
+  },
+  {
+    "kbId": 492,
+    "blogId": 11,
+    "blogTitle": "Tech Chat - What is RTCM format in RTK correction data transmission?",
+    "score": 0.777,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/11"
+  },
+  {
+    "kbId": 493,
+    "blogId": 10,
+    "blogTitle": "Tech Chat - How Does A GNSS Receiver Implement Tilt Surveying?",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/10"
+  },
+  {
+    "kbId": 494,
+    "blogId": 9,
+    "blogTitle": "How does P1 GNSS Receiver reach centimeter-level positioning with GIS software MyCumulus?",
+    "score": 0.933,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/9"
+  },
+  {
+    "kbId": 495,
+    "blogId": 8,
+    "blogTitle": "How To Choose A GNSS Receiver?",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/8"
+  },
+  {
+    "kbId": 496,
+    "blogId": 7,
+    "blogTitle": "Tech Chat - How the automatic steering system is composed and works?",
+    "score": 0.8,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/7"
+  },
+  {
+    "kbId": 497,
+    "blogId": 6,
+    "blogTitle": "Tech Chat – How does GNSS work?",
+    "score": 0.52,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/6"
+  },
+  {
+    "kbId": 498,
+    "blogId": 5,
+    "blogTitle": "Tech Chat – What is NMEA-0183 & GPGGA?",
+    "score": 0.7,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/5"
+  },
+  {
+    "kbId": 499,
+    "blogId": 4,
+    "blogTitle": "Tech Chat - How does NFC benefit surveyors work?",
+    "score": 0.6,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/4"
+  },
+  {
+    "kbId": 500,
+    "blogId": 3,
+    "blogTitle": "How does QFiled reach centimeter-level positioning accuracy with T8 Pro tablet?",
+    "score": 0.775,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/3"
+  },
+  {
+    "kbId": 501,
+    "blogId": 2,
+    "blogTitle": "How to Use T8 Pro Tablet with GIS software MyCumulus?",
+    "score": 0.733,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/2"
+  },
+  {
+    "kbId": 502,
+    "blogId": 11,
+    "blogTitle": "Tech Chat - What is RTCM format in RTK correction data transmission?",
+    "score": 0.612,
+    "sourceUrl": "https://www.singularxyz.com/blog_detail/11"
+  }
+]

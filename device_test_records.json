@@ -1,0 +1,77 @@
+[
+  {
+    "date": "2026-05-29",
+    "time": "18:13:28",
+    "country": "",
+    "order": "",
+    "tester": "Kimberly",
+    "model": "X1",
+    "sn": "",
+    "firmware": "1.0.A19S90",
+    "otherVersion": "",
+    "registration": "90天",
+    "testContent": "SN、订单、国家、固件版本、其他固件信息检查、注册期限、充电测试、外观检测、IMEI号、测试人、备注",
+    "importantInfo": "",
+    "remark1": "",
+    "remark2": "",
+    "result": "pass",
+    "failDetail": "",
+    "stepDetails": [
+      {
+        "title": "SN",
+        "result": "",
+        "value": ""
+      },
+      {
+        "title": "订单",
+        "result": "",
+        "value": ""
+      },
+      {
+        "title": "国家",
+        "result": "",
+        "value": ""
+      },
+      {
+        "title": "固件版本",
+        "result": "1.0.A19S90",
+        "value": "1.0.A19S90"
+      },
+      {
+        "title": "其他固件信息检查",
+        "result": "",
+        "value": ""
+      },
+      {
+        "title": "注册期限",
+        "result": "90天",
+        "value": "90天"
+      },
+      {
+        "title": "充电测试",
+        "result": "",
+        "value": ""
+      },
+      {
+        "title": "外观检测",
+        "result": "",
+        "value": ""
+      },
+      {
+        "title": "IMEI号",
+        "result": "",
+        "value": ""
+      },
+      {
+        "title": "测试人",
+        "result": "Kimberly",
+        "value": "Kimberly"
+      },
+      {
+        "title": "备注",
+        "result": "",
+        "value": ""
+      }
+    ]
+  }
+]
