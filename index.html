@@ -7273,7 +7273,7 @@ function deleteRecord(idx) {
   renderRecordsTable();
 }
 
-function dateToExcelSerial(dateStr) { if (!dateStr) return ""; var parts = dateStr.split("-"); var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])); return 25569 + Math.floor((d.getTime() + d.getTimezoneOffset() * 60000) / 86400000); }
+function dateToExcelSerial(dateStr) { if (!dateStr) return ""; var parts = dateStr.split("-"); var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])); return 25569 + Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); }
 
 function exportRecords() {
   var records = [];
