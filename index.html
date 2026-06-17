@@ -7007,7 +7007,81 @@ function parseBatchInput(text) {
       continue;
     }
 
-    // SN: alphanumeric, 6-20 chars
+    
+    // ── Tabular format: tab-separated or multi-space columns ──
+    // e.g. "2026-06-17 17:33:48    6126A0003    default    20260913    <64-hex-reg-code>"
+    if (/\t/.test(line) || /  /.test(line)) {
+      var parts = line.split(/\t/);
+      // If no tab, try splitting by 2+ spaces
+      if (parts.length === 1) parts = line.split(/  +/);
+      for (var ci = 0; ci < parts.length; ci++) {
+        var token = parts[ci].trim();
+        if (!token) continue;
+        // SN: alphanumeric, 6-20 chars
+        if (/^[A-Za-z0-9]{6,20}$/.test(token) && !/^[A-Fa-f0-9]{64}$/.test(token) && !/^default$/i.test(token) && !/^\d{8}$/.test(token)) {
+          if (seenSNs[token]) {
+            warnings.push("重复SN已跳过: " + token);
+            continue;
+          }
+          seenSNs[token] = true;
+
+          // Look for registration code nearby (64 hex chars)
+          var reg = "";
+          for (var cj = 0; cj < parts.length; cj++) {
+            if (cj !== ci && /^[A-Fa-f0-9]{64}$/.test(parts[cj].trim())) {
+              reg = parts[cj].trim().toUpperCase();
+              break;
+            }
+          }
+
+          // Check for order number in the same line
+          var ord = "";
+          for (var ck = 0; ck < parts.length; ck++) {
+            if (/^(xyz|sxhb)/i.test(parts[ck].trim())) {
+              ord = parts[ck].trim().toUpperCase();
+              break;
+            }
+          }
+
+          var m = "";
+          var ct = "";
+          var od = "";
+          if (typeof snDB !== "undefined" && snDB && snDB[token]) {
+            var r = snDB[token];
+            od = r[0] || "";
+            m = r[1] || "";
+            ct = r[2] || "";
+          }
+          if (!m) m = detectModelFromSN(token);
+
+          var fo = ord || od || currentOrder;
+
+          var dev = {
+            sn: token,
+            regCode: reg,
+            model: m || "未知型号",
+            country: ct,
+            order: fo,
+            tested: false
+          };
+          devices.push(dev);
+
+          var og = null;
+          for (var oi = 0; oi < orders.length; oi++) {
+            if (orders[oi].orderNumber === fo) { og = orders[oi]; break; }
+          }
+          if (!og) {
+            og = { orderNumber: fo, devices: [] };
+            orders.push(og);
+          }
+          og.devices.push(dev);
+        }
+      }
+      continue;
+    }
+
+
+		// SN: alphanumeric, 6-20 chars
     if (/^[A-Za-z0-9]{6,20}$/.test(line)) {
       var regCode = "";
       for (var j = i + 1; j < lines.length; j++) {
