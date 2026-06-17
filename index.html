@@ -7162,11 +7162,33 @@ function parseAndRender() {
     return;
   }
 
+  // Preserve tested status for existing devices, add new ones
+  var oldTested = {};
+  var oldReg = {};
+  if (batchState.devices) {
+    for (var di = 0; di < batchState.devices.length; di++) {
+      var d2 = batchState.devices[di];
+      oldTested[d2.sn] = d2.tested;
+      if (d2.regCode) oldReg[d2.sn] = d2.regCode;
+    }
+  }
+  var addedCount = 0;
+  for (var di = 0; di < parsed.devices.length; di++) {
+    var d3 = parsed.devices[di];
+    if (oldTested.hasOwnProperty(d3.sn)) {
+      d3.tested = oldTested[d3.sn];
+      if (!d3.regCode && oldReg[d3.sn]) d3.regCode = oldReg[d3.sn];
+    } else {
+      addedCount++;
+    }
+  }
+
   batchState.orders = parsed.orders;
   batchState.devices = parsed.devices;
   batchState.currentSN = null;
 
   var msg = "识别 " + parsed.orders.length + " 个订单，" + parsed.devices.length + " 台设备";
+  if (addedCount > 0) msg += "（新增 " + addedCount + " 台）";
   if (parsed.warnings.length > 0) msg += "（" + parsed.warnings.join("; ") + "）";
   if (resultEl) {
     resultEl.textContent = msg;
