@@ -7671,13 +7671,15 @@ var autoSaveEnabled = false;      // user has consented
 
 // -- Show consent banner when server is detected --
 function showAutoSavePrompt() {
-  var banner = document.getElementById("autoSaveBanner");
-  if (banner) banner.style.display = "flex";
+  // Delegate to IDB consent banner
+  showConsentBanner();
 }
 
 function consentAutoSave() {
   autoSaveEnabled = true;
   autoSaveServer = "server";
+  // Also enable IDB persistence
+  if (window._idbEnable) window._idbEnable();
   var banner = document.getElementById("autoSaveBanner");
   if (banner) banner.style.display = "none";
   // Merge server data, then push local data to server
@@ -7742,7 +7744,8 @@ function mergeIntoLocal(data) {
   xhr.onload = function() {
     if (xhr.status === 200) {
       autoSaveServer = "server";
-      showAutoSavePrompt();
+      // Don't show a separate banner - IDB consent flow handles that
+      // Just silently enable server sync for when consent happens
       return;
     }
     tryFSA();
@@ -8209,32 +8212,57 @@ function exportRecords() {
 (function() {
   var _setItem = localStorage.setItem.bind(localStorage);
   var _removeItem = localStorage.removeItem.bind(localStorage);
+  var _getItem = localStorage.getItem.bind(localStorage);
   var db = null;
+  var consented = false;
 
   function getDB(cb) {
     if (db) { cb(db); return; }
     var req = indexedDB.open("DeviceTestBackup", 1);
     req.onupgradeneeded = function(e) {
-      if (!e.target.result.objectStoreNames.contains("state"))
-        e.target.result.createObjectStore("state");
+      var d = e.target.result;
+      if (!d.objectStoreNames.contains("state"))
+        d.createObjectStore("state");
     };
     req.onsuccess = function(e) { db = e.target.result; cb(db); };
     req.onerror = function() { cb(null); };
   }
 
+  function idbPut(key, value, cb) {
+    getDB(function(d) {
+      if (!d) return;
+      try { d.transaction("state","readwrite").objectStore("state").put(value, key); if (cb) cb(); } catch(e) {}
+    });
+  }
+
+  function idbGet(key, cb) {
+    getDB(function(d) {
+      if (!d) { cb(null); return; }
+      try {
+        var req = d.transaction("state","readonly").objectStore("state").get(key);
+        req.onsuccess = function() { cb(req.result); };
+        req.onerror = function() { cb(null); };
+      } catch(e) { cb(null); }
+    });
+  }
+
+  // Sync to IDB when localStorage changes (only after consent)
+  function syncToIDB(key, value) {
+    if (!consented) return;
+    idbPut(key, value);
+  }
+
+  // Override localStorage.setItem to auto-sync
   localStorage.setItem = function(key, value) {
     _setItem(key, value);
     if (key === "deviceTestRecords" || key === "batchState") {
-      getDB(function(d) {
-        if (!d) return;
-        try { d.transaction("state","readwrite").objectStore("state").put(value, key); } catch(e) {}
-      });
+      syncToIDB(key, value);
     }
   };
-
   localStorage.removeItem = function(key) {
     _removeItem(key);
     if (key === "deviceTestRecords" || key === "batchState") {
+      if (!consented) return;
       getDB(function(d) {
         if (!d) return;
         try { d.transaction("state","readwrite").objectStore("state").delete(key); } catch(e) {}
@@ -8242,37 +8270,84 @@ function exportRecords() {
     }
   };
 
-  // On load: if localStorage is empty, restore from IndexedDB
-  var savedDR = localStorage.getItem("deviceTestRecords");
-  var savedBS = localStorage.getItem("batchState");
-  if (!savedDR || savedDR === "[]") {
-    getDB(function(d) {
-      if (!d) return;
-      try {
-        var req = d.transaction("state","readonly").objectStore("state").get("deviceTestRecords");
-        req.onsuccess = function() {
-          if (req.result) {
-            _setItem("deviceTestRecords", req.result);
-            renderRecordsTable();
-          }
-        };
-      } catch(e) {}
+  // Restore data from IDB into localStorage
+  function restoreFromIDB(cb) {
+    var restored = 0;
+    idbGet("deviceTestRecords", function(val) {
+      if (val) { _setItem("deviceTestRecords", val); restored++; }
+      idbGet("batchState", function(val2) {
+        if (val2) { _setItem("batchState", val2); restored++; }
+        if (restored > 0) {
+          if (_getItem("batchState")) loadBatchState();
+          renderRecordsTable();
+        }
+        if (cb) cb(restored > 0);
+      });
     });
   }
-  if (!savedBS || savedBS === "null") {
-    getDB(function(d) {
-      if (!d) return;
-      try {
-        var req = d.transaction("state","readonly").objectStore("state").get("batchState");
-        req.onsuccess = function() {
-          if (req.result) {
-            _setItem("batchState", req.result);
-            loadBatchState();
-          }
-        };
-      } catch(e) {}
-    });
+
+  // Show consent banner
+  function showConsentBanner() {
+    var banner = document.getElementById("autoSaveBanner");
+    if (!banner) return;
+    banner.style.display = "flex";
+    // Update banner text to be about data persistence
+    var span = banner.querySelector("span");
+    if (span) span.textContent = "是否允许自动保存测试数据？授权后数据将在浏览器中持久保存，清理缓存也不会丢失。";
+    var btns = banner.querySelectorAll("button");
+    if (btns.length >= 2) {
+      btns[0].textContent = "同意";
+      btns[0].onclick = function() {
+        consented = true;
+        idbPut("consent", "1");
+        banner.style.display = "none";
+        // Sync current localStorage to IDB immediately
+        var recs = _getItem("deviceTestRecords");
+        if (recs) idbPut("deviceTestRecords", recs);
+        var bs = _getItem("batchState");
+        if (bs) idbPut("batchState", bs);
+        // If auto-save server is available, also sync with server
+        if (typeof autoSaveServer !== "undefined" && autoSaveServer === "server") {
+          fetchServerData(function(data) {
+            if (data && data.length > 0) mergeIntoLocal(data);
+            persistToFile();
+            loadBatchStateFromServer(function(loaded) {
+              if (!loaded) loadBatchState();
+              saveBatchStateToServer();
+            });
+          });
+        }
+        updateAutoSaveUI();
+      };
+      btns[1].textContent = "暂不";
+      btns[1].onclick = function() {
+        banner.style.display = "none";
+      };
+    }
   }
+
+  // Expose for external use
+  window._idbPut = idbPut;
+  window._idbGet = idbGet;
+  window._idbConsented = function() { return consented; };
+  window._idbEnable = function() { consented = true; idbPut("consent", "1"); };
+  window._idbRestore = restoreFromIDB;
+
+  // Init: check consent, restore if needed
+  idbGet("consent", function(c) {
+    if (c) {
+      // Already consented - enable sync, restore if localStorage is empty
+      consented = true;
+      var hasRecords = _getItem("deviceTestRecords");
+      var hasBatch = _getItem("batchState");
+      if (!hasRecords || hasRecords === "[]" || !hasBatch || hasBatch === "null") {
+        restoreFromIDB();
+      }
+    } else {
+      // Not consented yet - show banner
+      showConsentBanner();
+    }
+  });
 })();
 
 // Ensure chat panel uses full app height when in chat mode
