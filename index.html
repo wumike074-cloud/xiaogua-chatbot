@@ -18,6 +18,7 @@
   --text: #1a1a1a;
   --text-secondary: #6b6b6b;
   --border: #e5e5e5;
+  --accent: #07a85c;
   --success: #07a85c;
   --warning: #f9ab00;
   --shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -615,6 +616,55 @@ body {
   .test-wizard { padding: 16px; }
 }
 
+/* Batch test import */
+.batch-open-btn { width: 100%; padding: 10px 0; background: #fff; color: var(--accent); border: 2px dashed var(--accent); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: background 0.15s; }
+.batch-open-btn:hover { background: #f0f4ff; }
+
+/* Modal overlay */
+.batch-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+.batch-dialog { background: #fff; border-radius: 12px; padding: 24px; width: 560px; max-width: 92vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,0.25); }
+.batch-dialog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+
+.batch-textarea { width: 100%; height: 240px; font-size: 12px; font-family: "SF Mono", "Cascadia Code", Consolas, monospace; border: 1px solid var(--border); border-radius: 6px; padding: 10px; resize: vertical; box-sizing: border-box; background: #fafafa; line-height: 1.6; }
+.batch-textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+.batch-parse-btn { width: 100%; margin-top: 10px; padding: 10px 0; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+.batch-parse-btn:hover { opacity: 0.9; }
+.batch-parse-result { font-size: 13px; margin-top: 8px; text-align: center; }
+.batch-parse-result.ok { color: #4caf50; font-weight: 600; }
+.batch-parse-result.warn { color: #e67e22; }
+
+/* Floating batch badge */
+.batch-float { position: fixed; top: 12px; left: 12px; z-index: 9999; background: var(--accent); color: #fff; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s; }
+.batch-float:hover { transform: scale(1.1); }
+.batch-float-icon { font-size: 20px; }
+.batch-float-badge { position: absolute; top: -4px; right: -4px; background: #ea4335; color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+
+/* Pending drawer */
+.batch-drawer { position: fixed; top: 0; left: 0; width: 340px; max-width: 90vw; height: 100vh; z-index: 9998; background: #fff; box-shadow: 4px 0 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; animation: slideIn 0.2s ease; }
+@keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.batch-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.batch-drawer-header span:first-child { font-weight: 700; font-size: 15px; }
+.batch-drawer-count { font-size: 12px; color: var(--text-secondary); background: #f0f0f0; padding: 2px 8px; border-radius: 10px; }
+.batch-drawer-body { flex: 1; overflow-y: auto; padding: 8px; }
+
+/* Pending items (reused in drawer) */
+.pending-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #fff; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 4px; cursor: pointer; transition: background 0.15s; }
+.pending-item:hover { background: #f0f4ff; }
+.pending-item .pi-left { flex: 1; min-width: 0; }
+.pending-item .pi-sn { font-weight: 700; font-size: 13px; color: var(--accent); cursor: pointer; }
+.pending-item .pi-model { color: #999; font-size: 11px; margin-left: 6px; }
+.pending-item .pi-warn { color: #e67e22; font-size: 11px; margin-left: 4px; }
+.pending-item .pi-arrow { color: var(--accent); font-size: 12px; flex-shrink: 0; margin-left: 8px; }
+.pending-item.tested { opacity: 0.45; background: #f5f5f5; cursor: default; }
+.pending-item.tested:hover { background: #f5f5f5; }
+.pending-item.tested .pi-arrow { color: #4caf50; }
+.pending-item.current { border-color: var(--accent); background: #f0f4ff; }
+
+.qr-container { text-align: center; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
+.qr-container img { display: block; margin: 0 auto; }
+.qr-container .qr-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+.reg-code-display { background: #f5f5f5; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; font-family: "SF Mono", "Cascadia Code", Consolas, monospace; font-size: 11px; word-break: break-all; user-select: all; }
+
 </style>
 </head>
 <body>
@@ -650,6 +700,7 @@ body {
   </div>
   <div class="test-panel" id="testPanel">
     <div id="autoSaveBanner" style="display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;padding:10px 16px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:13px;color:#2e7d32;">检测到本地自动保存服务，是否启用？启用后所有测试记录将自动存入本地文件。</span><div style="display:flex;gap:8px;flex-shrink:0;"><button onclick="consentAutoSave()" style="padding:4px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">同意</button><button onclick="dismissAutoSave()" style="padding:4px 16px;background:#eee;color:#666;border:none;border-radius:4px;cursor:pointer;font-size:12px;">暂不</button></div></div>
+    <button class="batch-open-btn" onclick="openBatchDialog()">📋 批量导入</button>
 <div class="test-main">
       <div class="product-sidebar">
         <h4>产品型号</h4>
@@ -716,6 +767,7 @@ body {
   </div>
 </div>
 
+<script src="qrcode.bundle.js"></script>
 <script src="sn_db_full.js"></script>
 <script src="order_db.js"></script>
 <script src="fw_db.js"></script>
@@ -3782,6 +3834,7 @@ const testProcedureDB = {
       {title:"开机检测",detail:"检查开关机动画是否正常。订单中未明确要求中性/定制版本时，开机界面显示为公司信息；若订单中明确要求中性/定制版本，需要在FTP中找到对应刷机包进行刷机处理，刷机后再次确认界面是否正确。"},
       {title:"罗盘校准",detail:"打开手簿中的罗盘软件，参考手机的罗盘检查手簿罗盘的指示是否正常。如若两者的指示差异很大，需要通过8字法进行校准。"},
       {title:"软件安装",detail:"安装SingularPad软件，根据订单要求注册软件。"},
+      {type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数"},
       {title:"外观检查",detail:"检查外观是否有损坏，有无明显划痕，如若上述存在问题，需要联系仓库进行换货处理。"},
       {title:"IMEI记录",detail:"当发货国家为印度、土耳其或调货单明确要求需要记录IMEI时，需要进入手簿的系统设置界面，在关于设备下找到IMEI，并记录。"}
     ]},
@@ -3790,6 +3843,7 @@ const testProcedureDB = {
       {title:"开机检测",detail:"检查开关机动画是否正常。订单中未明确要求中性/定制版本时，开机界面显示为公司信息；若订单中明确要求中性/定制版本，需要在FTP中找到对应刷机包进行刷机处理，刷机后再次确认界面是否正确。"},
       {title:"罗盘校准",detail:"打开手簿中的罗盘软件，参考手机的罗盘检查手簿罗盘的指示是否正常。如若两者的指示差异很大，需要通过8字法进行校准。"},
       {title:"软件安装",detail:"安装SingularPad软件，根据订单要求注册软件。"},
+      {type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数"},
       {title:"外观检查",detail:"检查外观是否有损坏，有无明显划痕，如若上述存在问题，需要联系仓库进行换货处理。"},
       {title:"IMEI记录",detail:"当发货国家为印度、土耳其或调货单明确要求需要记录IMEI时，需要进入手簿的系统设置界面，在关于设备下找到IMEI，并记录。"}
     ]},
@@ -3798,6 +3852,7 @@ const testProcedureDB = {
       {title:"开机检测",detail:"检查开关机动画是否正常。订单中未明确要求中性/定制版本时，开机界面显示为公司信息；若订单中明确要求中性/定制版本，需要在FTP中找到对应刷机包进行刷机处理，刷机后再次确认界面是否正确。"},
       {title:"罗盘校准",detail:"打开手簿中的罗盘软件，参考手机的罗盘检查手簿罗盘的指示是否正常。如若两者的指示差异很大，需要通过8字法进行校准。"},
       {title:"软件安装",detail:"安装SingularPad软件，根据订单要求注册软件。"},
+      {type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数"},
       {title:"外观检查",detail:"检查外观是否有损坏，有无明显划痕，如若上述存在问题，需要联系仓库进行换货处理。"},
       {title:"IMEI记录",detail:"当发货国家为印度、土耳其或调货单明确要求需要记录IMEI时，需要进入手簿的系统设置界面，在关于设备下找到IMEI，并记录。"}
     ]},
@@ -3806,6 +3861,7 @@ const testProcedureDB = {
       {title:"开机检测",detail:"检查开关机动画是否正常。订单中未明确要求中性/定制版本时，开机界面显示为公司信息；若订单中明确要求中性/定制版本，需要在FTP中找到对应刷机包进行刷机处理，刷机后再次确认界面是否正确。"},
       {title:"罗盘校准",detail:"打开手簿中的罗盘软件，参考手机的罗盘检查手簿罗盘的指示是否正常。如若两者的指示差异很大，需要通过8字法进行校准。"},
       {title:"软件安装",detail:"安装SingularPad软件，根据订单要求注册软件。"},
+      {type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数"},
       {title:"外观检查",detail:"检查外观是否有损坏，有无明显划痕，如若上述存在问题，需要联系仓库进行换货处理。"},
       {title:"IMEI记录",detail:"当发货国家为印度、土耳其或调货单明确要求需要记录IMEI时，需要进入手簿的系统设置界面，在关于设备下找到IMEI，并记录。"}
     ]},
@@ -4631,6 +4687,9 @@ let currentLang = "zh";
 // ==================== INIT ====================
 function init() {
   autoResizeTextarea();
+  document.addEventListener("DOMContentLoaded", function() {
+    loadBatchState();
+  });
 }
 
 function t(key) {
@@ -6586,12 +6645,18 @@ function escapeJs(s) {
   return s.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
-function selectProduct(name) {
+function selectProduct(name, prefillData) {
   var steps = testStepsConfig[name] || [];
   if (steps.length === 0) return;
   currentProduct = name;
   currentStep = 0;
   stepData = {};
+  if (prefillData) {
+    if (prefillData.sn) stepData["sn"] = prefillData.sn;
+    if (prefillData.order) stepData["order"] = prefillData.order;
+    if (prefillData.country) stepData["country"] = prefillData.country;
+    if (prefillData.regCode) stepData["regCode"] = prefillData.regCode;
+  }
   renderProductList();
   renderStep();
 }
@@ -6660,6 +6725,18 @@ function renderStep() {
     html += '<div id="snHint" style="margin-top:8px;font-size:12px;color:var(--text-secondary);"></div>';
   }
 
+  // Registration code display + QR for registration step
+  if (step.key === "registration") {
+    var regCode = stepData["regCode"] || "";
+    var sn = stepData["sn"] || "";
+    if (regCode) {
+      html += '<div class="reg-code-display">' + escapeHtml(regCode) + '</div>';
+      html += '<div class="qr-container" id="qrContainer"><div id="qrCodeImg"></div><div class="qr-label">扫描注册 ' + escapeHtml(sn) + '</div></div>';
+    } else {
+      html += '<div class="qr-container" id="qrContainer" style="display:none"><div id="qrCodeImg"></div><div class="qr-label"></div></div>';
+    }
+  }
+
   html += '</div>';
 
   // Nav buttons
@@ -6694,6 +6771,19 @@ function renderStep() {
         }
       });
     });
+  }
+
+  // Generate QR code if on registration step with a reg code
+  if (step.key === "registration") {
+    var qrCode = stepData["regCode"] || "";
+    if (qrCode) {
+      generateQRCode(qrCode).then(function(url) {
+        var imgEl = document.getElementById("qrCodeImg");
+        if (imgEl) {
+          imgEl.innerHTML = '<img src="' + url + '" width="150" height="150" alt="QR Code">';
+        }
+      }).catch(function() {});
+    }
   }
 }
 
@@ -6829,6 +6919,352 @@ function goToStep(idx) {
   renderStep();
 }
 
+// ==================== BATCH TEST IMPORT ====================
+var batchState = {
+  orders: [],        // [{ orderNumber, devices[] }]
+  devices: [],       // flat list for iteration
+  currentSN: null
+};
+
+function saveBatchState() {
+  if (batchState.devices.length > 0) {
+    localStorage.setItem("batchState", JSON.stringify(batchState));
+  } else {
+    localStorage.removeItem("batchState");
+  }
+}
+
+function loadBatchState() {
+  try {
+    var saved = JSON.parse(localStorage.getItem("batchState") || "null");
+    if (saved && saved.devices && saved.devices.length > 0) {
+      batchState = saved;
+      if (document.getElementById("batchFloat")) {
+        renderPendingList();
+      }
+    }
+  } catch(e) {}
+}
+
+function openBatchDialog() {
+  var overlay = document.getElementById("batchOverlay");
+  var textarea = document.getElementById("batchTextarea");
+  var resultEl = document.getElementById("batchParseResult");
+  if (overlay) overlay.style.display = "flex";
+  if (resultEl) { resultEl.textContent = ""; resultEl.className = "batch-parse-result"; }
+  if (textarea) textarea.focus();
+}
+
+function closeBatchDialog() {
+  var overlay = document.getElementById("batchOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+function detectModelFromSN(sn) {
+  var s = sn.toUpperCase();
+  // Letter-prefix models
+  if (/^SC300/.test(s)) return "SC300";
+  if (/^SC200/.test(s)) return "SC200";
+  if (/^TL/.test(s)) return "SC260";
+  if (/^Y1/.test(s)) return "Y1";
+  if (/^D/.test(s)) return "SDL2";
+  // Numeric-prefix models
+  if (/^1432/.test(s)) return "Sfaira系列";
+  if (/^16/.test(s)) return "SV100系列";
+  if (/^18/.test(s)) return "P2系列";
+  if (/^21/.test(s)) return "X1系列/E1";
+  if (/^22/.test(s)) return "E1 lite";
+  if (/^31/.test(s)) return "Orion one";
+  if (/^41/.test(s)) return "S20";
+  if (/^51/.test(s)) return "Z1";
+  if (/^61/.test(s)) return "Horus";
+  if (/^71/.test(s)) return "XBase";
+  return "";
+}
+
+function parseBatchInput(text) {
+  if (!text || !text.trim()) return { orders: [], devices: [], warnings: [] };
+
+  var lines = text.split(/\r?\n/);
+  var currentOrder = "";
+  var devices = [];
+  var orders = [];
+  var seenSNs = {};
+  var warnings = [];
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+
+    // Order number: starts with XYZ or SXHB (case-insensitive)
+    if (/^xyz/i.test(line) || /^sxhb/i.test(line)) {
+      currentOrder = line.toUpperCase();
+      var found = false;
+      for (var o = 0; o < orders.length; o++) {
+        if (orders[o].orderNumber === currentOrder) { found = true; break; }
+      }
+      if (!found) orders.push({ orderNumber: currentOrder, devices: [] });
+      continue;
+    }
+
+    // SN: alphanumeric, 6-20 chars
+    if (/^[A-Za-z0-9]{6,20}$/.test(line)) {
+      var regCode = "";
+      for (var j = i + 1; j < lines.length; j++) {
+        var nextLine = lines[j].trim();
+        if (!nextLine) continue;
+        if (/^[A-Fa-f0-9]{64}$/.test(nextLine)) {
+          regCode = nextLine.toUpperCase();
+        }
+        break;
+      }
+
+      var sn = line;
+      if (seenSNs[sn]) {
+        warnings.push("重复SN已跳过: " + sn);
+        continue;
+      }
+      seenSNs[sn] = true;
+
+      var model = "";
+      var country = "";
+      var orderFromDB = "";
+      if (typeof snDB !== "undefined" && snDB && snDB[sn]) {
+        var rec = snDB[sn];
+        orderFromDB = rec[0] || "";
+        model = rec[1] || "";
+        country = rec[2] || "";
+      }
+
+      // SN prefix model detection fallback
+      if (!model) model = detectModelFromSN(sn);
+
+      var finalOrder = orderFromDB || currentOrder;
+
+      var device = {
+        sn: sn,
+        regCode: regCode,
+        model: model || "未知型号",
+        country: country,
+        order: finalOrder,
+        tested: false
+      };
+      devices.push(device);
+
+      // Add to order group
+      var orderGroup = null;
+      for (var o2 = 0; o2 < orders.length; o2++) {
+        if (orders[o2].orderNumber === finalOrder) { orderGroup = orders[o2]; break; }
+      }
+      if (!orderGroup) {
+        orderGroup = { orderNumber: finalOrder, devices: [] };
+        orders.push(orderGroup);
+      }
+      orderGroup.devices.push(device);
+    }
+  }
+
+  return { orders: orders, devices: devices, warnings: warnings };
+}
+
+function parseAndRender() {
+  var textarea = document.getElementById("batchTextarea");
+  var resultEl = document.getElementById("batchParseResult");
+  if (!textarea) return;
+
+  var rawText = textarea.value;
+  if (!rawText.trim()) {
+    if (resultEl) { resultEl.textContent = "请先粘贴数据"; resultEl.className = "batch-parse-result warn"; }
+    return;
+  }
+
+  var parsed = parseBatchInput(rawText);
+
+  if (parsed.devices.length === 0) {
+    if (resultEl) {
+      resultEl.textContent = "未识别到设备数据，请检查格式";
+      resultEl.className = "batch-parse-result warn";
+    }
+    return;
+  }
+
+  batchState.orders = parsed.orders;
+  batchState.devices = parsed.devices;
+  batchState.currentSN = null;
+
+  var msg = "识别 " + parsed.orders.length + " 个订单，" + parsed.devices.length + " 台设备";
+  if (parsed.warnings.length > 0) msg += "（" + parsed.warnings.join("; ") + "）";
+  if (resultEl) {
+    resultEl.textContent = msg;
+    resultEl.className = "batch-parse-result ok";
+  }
+
+  saveBatchState();
+  renderPendingList();
+
+  // Show floating badge and close dialog
+  setTimeout(function() { closeBatchDialog(); }, 500);
+}
+
+function togglePendingDrawer() {
+  var drawer = document.getElementById("batchDrawer");
+  if (!drawer) return;
+  if (drawer.style.display === "none" || !drawer.style.display) {
+    drawer.style.display = "flex";
+  } else {
+    drawer.style.display = "none";
+  }
+}
+
+function renderPendingList() {
+  var floatEl = document.getElementById("batchFloat");
+  var badgeEl = document.getElementById("batchFloatBadge");
+  var drawerItemsEl = document.getElementById("pendingDrawerItems");
+  var drawerCountEl = document.getElementById("pendingDrawerCount");
+
+  var untested = batchState.devices.filter(function(d) { return !d.tested; }).length;
+
+  if (batchState.devices.length === 0) {
+    if (floatEl) floatEl.style.display = "none";
+    var drawerEl = document.getElementById("batchDrawer");
+    if (drawerEl) drawerEl.style.display = "none";
+    return;
+  }
+
+  // Show floating badge
+  if (floatEl) floatEl.style.display = "flex";
+  if (badgeEl) badgeEl.textContent = untested;
+  if (drawerCountEl) drawerCountEl.textContent = untested + "台未测";
+
+  if (!drawerItemsEl) return;
+
+  var html = "";
+  var lastOrder = "";
+  batchState.devices.forEach(function(d) {
+    if (d.order !== lastOrder) {
+      if (lastOrder) html += '<div style="height:4px;"></div>';
+      html += '<div style="font-size:13px;font-weight:700;color:#555;padding:4px 10px;background:#f8f8f8;border-radius:3px;margin-bottom:2px;">订单: ' + escapeHtml(d.order) + '</div>';
+      lastOrder = d.order;
+    }
+
+    var cls = "pending-item";
+    if (d.tested) cls += " tested";
+    if (d.sn === batchState.currentSN) cls += " current";
+
+    html += '<div class="' + cls + '" data-sn="' + escapeHtml(d.sn) + '" onclick="startBatchDevice(\'' + escapeJs(d.sn) + '\')">';
+    html += '<div class="pi-left">';
+    html += '<span class="pi-sn">' + escapeHtml(d.sn) + '</span>';
+    html += '<span class="pi-model">' + escapeHtml(d.model) + '</span>';
+    if (d.model === "未知型号") html += '<span class="pi-warn">⚠ 未知型号</span>';
+    html += '</div>';
+    if (d.tested) {
+      html += '<span class="pi-arrow">✓ 已完成</span>';
+    } else {
+      html += '<span class="pi-arrow">→</span>';
+    }
+    html += '</div>';
+  });
+
+  drawerItemsEl.innerHTML = html;
+}
+
+function startBatchDevice(sn) {
+  var device = null;
+  for (var i = 0; i < batchState.devices.length; i++) {
+    if (batchState.devices[i].sn === sn) { device = batchState.devices[i]; break; }
+  }
+  if (!device || device.tested) return;
+
+  batchState.currentSN = sn;
+
+  var model = device.model;
+  // Handle ambiguous models
+  if (model === "X1系列/E1") {
+    model = confirm("21系列SN，请选择型号：\n「确定」= X1\n「取消」= E1") ? "X1" : "E1";
+  }
+  if (model === "Sfaira系列") {
+    model = confirm("1432系列SN，请选择型号：\n「确定」= Sfaira one\n「取消」= Sfaira one plus") ? "Sfaira one" : "Sfaira one plus";
+  }
+  if (model === "P2系列") {
+    model = confirm("18系列SN，请选择型号：\n「确定」= P2\n「取消」= P2 Plus") ? "P2" : "P2 Plus";
+  }
+  if (model === "SV100系列") {
+    var choice = prompt("16系列SN，请选择型号：\n输入 1 = SV100\n输入 2 = SV100 DUAL\n输入 3 = SV100 INS", "1");
+    if (choice === "2") model = "SV100 DUAL";
+    else if (choice === "3") model = "SV100 INS";
+    else model = "SV100";
+  }
+  if (!model || model === "未知型号" || !testStepsConfig[model] || testStepsConfig[model].length === 0) {
+    model = "X1";
+  }
+
+  switchTab("test");
+  selectProduct(model, {
+    sn: device.sn,
+    order: device.order,
+    country: device.country,
+    regCode: device.regCode
+  });
+
+  // Close drawer after selection
+  var drawer = document.getElementById("batchDrawer");
+  if (drawer) drawer.style.display = "none";
+
+  renderPendingList();
+}
+function markBatchDeviceDone(sn) {
+  for (var i = 0; i < batchState.devices.length; i++) {
+    if (batchState.devices[i].sn === sn) {
+      batchState.devices[i].tested = true;
+      break;
+    }
+  }
+  if (batchState.currentSN === sn) {
+    batchState.currentSN = null;
+  }
+  saveBatchState();
+  renderPendingList();
+
+  var next = null;
+  for (var j = 0; j < batchState.devices.length; j++) {
+    if (!batchState.devices[j].tested) { next = batchState.devices[j]; break; }
+  }
+  if (next) {
+    startBatchDevice(next.sn);
+  } else {
+    currentProduct = null;
+    currentStep = 0;
+    stepData = {};
+    var wizard = document.getElementById("testWizard");
+    if (wizard) {
+      wizard.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:12px;">🎉</div><div style="font-size:18px;font-weight:700;color:var(--success);margin-bottom:8px;">全部测试完成！</div><div style="font-size:13px;color:var(--text-secondary);">共 ' + batchState.devices.length + ' 台设备已完成测试</div></div>';
+    }
+    renderProductList();
+  }
+}
+
+function generateQRCode(regCode) {
+  return new Promise(function(resolve, reject) {
+    if (!regCode) { reject(new Error("No registration code")); return; }
+
+    if (typeof QRCode !== "undefined" && QRCode.toDataURL) {
+      try {
+        QRCode.toDataURL(regCode, { width: 150, margin: 1 }, function(err, url) {
+          if (err) {
+            resolve("https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(regCode));
+          } else {
+            resolve(url);
+          }
+        });
+      } catch(e) {
+        resolve("https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(regCode));
+      }
+    } else {
+      resolve("https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(regCode));
+    }
+  });
+}
+// ==================== BATCH TEST IMPORT END ====================
 
 // === Local file persistence ===
 var autoSaveServer = null;        // "server" = localhost:8765, "fsa" = File System Access, null = unavailable
@@ -7181,6 +7617,7 @@ function finishTest() {
     firmware: stepData["firmware"] || "",
     otherVersion: stepData["otherVersion"] || "",
     registration: stepData["registration"] === "自定义" ? (stepData["registration_custom"] || "自定义") : (stepData["registration"] || ""),
+    regCode: stepData["regCode"] || "",
     testContent: stepData["testContent"] || stepTitles,
     importantInfo: stepData["importantInfo"] || "",
     remark1: [stepData["imei"], stepData["remark1"]].filter(Boolean).join("; "),
@@ -7199,6 +7636,11 @@ function finishTest() {
   records.unshift(record);
   localStorage.setItem("deviceTestRecords", JSON.stringify(records));
   persistToFile();
+
+  // Mark batch device as done
+  if (batchState.currentSN) {
+    markBatchDeviceDone(batchState.currentSN);
+  }
 
   // Reset test
   currentStep = 0;
@@ -7337,5 +7779,36 @@ function exportRecords() {
 </script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<!-- Batch import dialog -->
+<div class="batch-overlay" id="batchOverlay" style="display:none">
+  <div class="batch-dialog">
+    <div class="batch-dialog-header">
+      <span style="font-weight:700;font-size:15px;">📋 批量导入</span>
+      <button onclick="closeBatchDialog()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">&times;</button>
+    </div>
+    <textarea class="batch-textarea" id="batchTextarea" placeholder="粘贴订单号 + SN + 注册码数据..."></textarea>
+    <button class="batch-parse-btn" onclick="parseAndRender()">解析</button>
+    <div class="batch-parse-result" id="batchParseResult"></div>
+  </div>
+</div>
+
+
+<!-- Floating batch badge -->
+<div class="batch-float" id="batchFloat" style="display:none" onclick="togglePendingDrawer()">
+  <span class="batch-float-icon">📋</span>
+  <span class="batch-float-badge" id="batchFloatBadge">0</span>
+</div>
+
+<!-- Pending drawer -->
+<div class="batch-drawer" id="batchDrawer" style="display:none">
+  <div class="batch-drawer-header">
+    <span>⏳ 待测列表</span>
+    <span class="batch-drawer-count" id="pendingDrawerCount">0台未测</span>
+    <button onclick="event.stopPropagation();togglePendingDrawer()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;">&times;</button>
+  </div>
+  <div class="batch-drawer-body" id="pendingDrawerItems"></div>
+</div>
+
 </body>
 </html>
