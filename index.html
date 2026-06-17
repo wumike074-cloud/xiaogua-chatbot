@@ -689,6 +689,7 @@ body {
     <button class="tab-btn active" data-tab="chat" onclick="switchTab('chat')">小瓜 Chat</button>
     <button class="tab-btn" data-tab="test" onclick="switchTab('test')">设备测试</button>
   </div>
+  <div id="autoSaveBanner" style="display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;padding:10px 16px;margin:0 0 8px 0;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:13px;color:#2e7d32;">是否允许自动保存测试数据？授权后数据将在浏览器中持久保存，清理缓存也不会丢失。</span><div style="display:flex;gap:8px;flex-shrink:0;"><button id="btnConsentSave" style="padding:4px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">同意</button><button id="btnConsentDismiss" style="padding:4px 16px;background:#eee;color:#666;border:none;border-radius:4px;cursor:pointer;font-size:12px;">暂不</button></div></div>
   <div class="chat-panel active" id="chatPanel">
     <main class="chat-area">
       <div class="chat-header">
@@ -714,7 +715,6 @@ body {
     </main>
   </div>
   <div class="test-panel" id="testPanel">
-    <div id="autoSaveBanner" style="display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;padding:10px 16px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:13px;color:#2e7d32;">检测到本地自动保存服务，是否启用？启用后所有测试记录将自动存入本地文件。</span><div style="display:flex;gap:8px;flex-shrink:0;"><button onclick="consentAutoSave()" style="padding:4px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">同意</button><button onclick="dismissAutoSave()" style="padding:4px 16px;background:#eee;color:#666;border:none;border-radius:4px;cursor:pointer;font-size:12px;">暂不</button></div></div>
 <div class="test-main">
       <div class="product-sidebar">
         <h4>产品型号</h4>
