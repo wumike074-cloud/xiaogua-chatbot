@@ -616,6 +616,16 @@ body {
   .test-wizard { padding: 16px; }
 }
 
+/* Records popup - bottom half-screen */
+.records-popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10001; display: none; align-items: flex-end; justify-content: center; }
+.records-popup-overlay.show { display: flex; }
+.records-popup { background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-width: 900px; height: 55vh; display: flex; flex-direction: column; box-shadow: 0 -4px 24px rgba(0,0,0,0.15); animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.records-popup-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.records-popup-header span { font-weight: 700; font-size: 15px; }
+.records-popup-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #999; line-height: 1; }
+.records-popup-table-wrap { overflow: auto; flex: 1; padding: 0 8px 8px; }
+
 /* Batch test import */
 .batch-open-btn { width: 100%; padding: 10px 0; background: #fff; color: var(--accent); border: 2px dashed var(--accent); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: background 0.15s; }
 .batch-open-btn:hover { background: #f0f4ff; }
@@ -7958,8 +7968,6 @@ function finishTest() {
 }
 
 // Render records table
-var recordsExpanded = false;
-
 function renderRecordsTable() {
   var tbody = document.getElementById("recordsBody");
   var countEl = document.getElementById("recordCount");
@@ -7975,33 +7983,59 @@ function renderRecordsTable() {
     return;
   }
 
-  var showAll = recordsExpanded || records.length <= 3;
-  var displayRecords = showAll ? records : records.slice(0, 3);
-
+  // Inline table: show last 3
+  var displayRecords = records.slice(-3);
   if (toggleBtn) {
-    toggleBtn.style.display = records.length > 5 ? "" : "none";
-    toggleBtn.textContent = recordsExpanded ? "收起" : "展开全部 (" + records.length + "条)";
+    toggleBtn.style.display = "";
+    toggleBtn.textContent = "展开全部 (" + records.length + "条)";
   }
 
   var html = "";
   var fields = ["date","country","order","tester","model","sn","firmware","registration","importantInfo","remark1","remark2"];
-  displayRecords.forEach(function(r, idx) {
+  var globalIdx = records.length - displayRecords.length;
+  displayRecords.forEach(function(r, i) {
+    var idx = globalIdx + i;
     html += '<tr>';
-    for (var i = 0; i < fields.length; i++) {
-      var val = r[fields[i]] || "";
+    for (var j = 0; j < fields.length; j++) {
+      var val = r[fields[j]] || "";
       html += '<td>' + escapeHtml(String(val)) + '</td>';
     }
     html += '<td class="col-del"><button class="btn-del" onclick="deleteRecord(' + idx + ')" title="删除">&times;</button></td>';
     html += '</tr>';
   });
-  if (!showAll) {
+  if (records.length > 3) {
     html += '<tr><td colspan="12" style="text-align:center;color:var(--text-secondary);padding:8px;font-size:12px;">显示最近3条，共 ' + records.length + ' 条记录</td></tr>';
   }
   tbody.innerHTML = html;
 }
 
 function toggleRecords() {
-  recordsExpanded = !recordsExpanded;
+  var overlay = document.getElementById("recordsPopupOverlay");
+  var popupBody = document.getElementById("popupRecordsBody");
+  var popupCount = document.getElementById("popupRecordCount");
+  var records = [];
+  try { records = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
+
+  if (popupCount) popupCount.textContent = records.length;
+
+  var fields = ["date","country","order","tester","model","sn","firmware","registration","importantInfo","remark1","remark2"];
+  var html = "";
+  records.forEach(function(r, idx) {
+    html += '<tr>';
+    for (var i = 0; i < fields.length; i++) {
+      var val = r[fields[i]] || "";
+      html += '<td>' + escapeHtml(String(val)) + '</td>';
+    }
+    html += '<td class="col-del"><button class="btn-del" onclick="deleteRecord(' + idx + ');closeRecordsPopup();" title="删除">&times;</button></td>';
+    html += '</tr>';
+  });
+  popupBody.innerHTML = html;
+  overlay.classList.add("show");
+}
+
+function closeRecordsPopup() {
+  var overlay = document.getElementById("recordsPopupOverlay");
+  overlay.classList.remove("show");
   renderRecordsTable();
 }
 
@@ -8116,6 +8150,24 @@ function exportRecords() {
     <button onclick="event.stopPropagation();togglePendingDrawer()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;">&times;</button>
   </div>
   <div class="batch-drawer-body" id="pendingDrawerItems"></div>
+</div>
+
+<!-- Records popup -->
+<div class="records-popup-overlay" id="recordsPopupOverlay" onclick="closeRecordsPopup()">
+  <div class="records-popup" onclick="event.stopPropagation()">
+    <div class="records-popup-header">
+      <span>测试记录（<span id="popupRecordCount">0</span>条）</span>
+      <button class="records-popup-close" onclick="closeRecordsPopup()">&times;</button>
+    </div>
+    <div class="records-popup-table-wrap">
+      <table class="records-table" id="popupRecordsTable">
+        <thead><tr>
+          <th>时间</th><th>发货国家</th><th>订单号</th><th>测试人</th><th>设备型号</th><th>SN</th><th>固件版本</th><th>注册情况</th><th>其他重要信息</th><th>IMEI号</th><th>备注2</th>
+        </tr></thead>
+        <tbody id="popupRecordsBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <button class="add-device-fab" onclick="openAddDeviceDialog()" title="新增设备">＋ 新增设备</button>
