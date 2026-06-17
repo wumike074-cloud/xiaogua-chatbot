@@ -6714,16 +6714,26 @@ function renderStep() {
     if (!opts) opts = [];
     var sel = stepData[step.key || step.title] || (step.multi ? [] : "");
     var inputType = step.multi ? "checkbox" : "radio";
+    // Always append "其他" option for firmware steps
+    var hasOther = step.key === "firmware";
     html += '<div class="step-options">';
     for (var j = 0; j < opts.length; j++) {
       var checked = step.multi ? (sel.indexOf(opts[j]) >= 0) : (sel === opts[j]);
       html += '<label><input type="' + inputType + '" name="stepOpt" value="' + escapeHtml(opts[j]) + '"' + (checked ? " checked" : "") + '> ' + escapeHtml(opts[j]) + '</label>';
+    }
+    if (hasOther) {
+      html += '<label><input type="radio" name="stepOpt" value="其他"' + (sel === "其他" ? " checked" : "") + '> 其他</label>';
     }
     html += '</div>';
     if (step.customOption) {
       var customVal = stepData[step.key + "_custom"] || "";
       var customStyle = sel === "自定义" ? "" : "display:none";
       html += '<div id="customOptionInput" style="margin-top:10px;' + customStyle + '"><input type="text" id="customOptionValue" placeholder="' + escapeHtml(step.customPlaceholder || '') + '" value="' + escapeHtml(customVal) + '" style="max-width:300px;"></div>';
+    }
+    if (hasOther) {
+      var fwOtherVal = stepData["firmware_other"] || "";
+      var fwOtherStyle = sel === "其他" ? "" : "display:none";
+      html += '<div id="fwOtherInput" style="margin-top:10px;' + fwOtherStyle + '"><input type="text" id="fwOtherValue" placeholder="请输入固件版本" value="' + escapeHtml(fwOtherVal) + '" style="max-width:300px;"></div>';
     }
   } else {
     // input type
@@ -6875,6 +6885,10 @@ function nextStep() {
       var customInput = document.getElementById("customOptionValue");
       if (customInput) stepData[key + "_custom"] = customInput.value;
     }
+    if (step.key === "firmware" && stepData[key] === "其他") {
+      var fwOther = document.getElementById("fwOtherValue");
+      if (fwOther) stepData["firmware_other"] = fwOther.value;
+    }
   } else if (step.type === "confirm") {
     if (stepData[key] === "fail") {
       var remarkInput = document.getElementById("failRemarkInput");
@@ -6915,6 +6929,10 @@ function saveCurrentStepData() {
     if (step.customOption && stepData[key] === "自定义") {
       var customInput = document.getElementById("customOptionValue");
       if (customInput) stepData[key + "_custom"] = customInput.value;
+    }
+    if (step.key === "firmware" && stepData[key] === "其他") {
+      var fwOther = document.getElementById("fwOtherValue");
+      if (fwOther) stepData["firmware_other"] = fwOther.value;
     }
   } else if (step.type === "confirm") {
     if (stepData[key] === "fail") {
@@ -7926,7 +7944,7 @@ function finishTest() {
     tester: stepData["tester"] || "",
     model: currentProduct,
     sn: stepData["sn"] || "",
-    firmware: stepData["firmware"] || "",
+    firmware: stepData["firmware"] === "其他" ? (stepData["firmware_other"] || "其他") : (stepData["firmware"] || ""),
     otherVersion: stepData["otherVersion"] || "",
     registration: stepData["registration"] === "自定义" ? (stepData["registration_custom"] || "自定义") : (stepData["registration"] || ""),
     regCode: stepData["regCode"] || "",
