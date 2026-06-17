@@ -619,6 +619,12 @@ body {
 /* Batch test import */
 .batch-open-btn { width: 100%; padding: 10px 0; background: #fff; color: var(--accent); border: 2px dashed var(--accent); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: background 0.15s; }
 .batch-open-btn:hover { background: #f0f4ff; }
+.add-device-fab { position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px; background: #07a85c; color: #fff; border: none; border-radius: 50%; font-size: 20px; cursor: pointer; box-shadow: 0 4px 16px rgba(7,168,92,0.4); z-index: 9999; transition: transform 0.15s, box-shadow 0.15s; display: flex; align-items: center; justify-content: center; }
+.add-device-fab:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(7,168,92,0.5); }
+.pi-del { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; color: #999; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+.pi-del:hover { background: #fee; color: #e74c3c; }
+.drawer-del-all { padding: 4px 12px; background: none; border: 1px solid #e74c3c; border-radius: 4px; color: #e74c3c; font-size: 12px; cursor: pointer; margin-left: auto; margin-right: 8px; transition: all 0.15s; }
+.drawer-del-all:hover { background: #e74c3c; color: #fff; }
 
 /* Modal overlay */
 .batch-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10000; display: flex; align-items: center; justify-content: center; }
@@ -703,7 +709,6 @@ body {
   <div class="test-panel" id="testPanel">
     <div id="autoSaveBanner" style="display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;padding:10px 16px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:13px;color:#2e7d32;">检测到本地自动保存服务，是否启用？启用后所有测试记录将自动存入本地文件。</span><div style="display:flex;gap:8px;flex-shrink:0;"><button onclick="consentAutoSave()" style="padding:4px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">同意</button><button onclick="dismissAutoSave()" style="padding:4px 16px;background:#eee;color:#666;border:none;border-radius:4px;cursor:pointer;font-size:12px;">暂不</button></div></div>
     <button class="batch-open-btn" onclick="openBatchDialog()">📋 批量导入</button>
-    <button class="batch-open-btn" onclick="openAddDeviceDialog()" style="background:#07a85c;">➕ 新增设备</button>
 <div class="test-main">
       <div class="product-sidebar">
         <h4>产品型号</h4>
@@ -7430,10 +7435,45 @@ function renderPendingList() {
     } else {
       html += '<span class="pi-arrow">→</span>';
     }
+    html += '<span class="pi-del" onclick="event.stopPropagation();deleteDevice(\'' + escapeJs(d.sn) + '\')" title="删除">×</span>';
     html += '</div>';
   });
 
   drawerItemsEl.innerHTML = html;
+}
+
+function deleteDevice(sn) {
+  // Remove from devices
+  for (var i = 0; i < batchState.devices.length; i++) {
+    if (batchState.devices[i].sn === sn) {
+      batchState.devices.splice(i, 1);
+      break;
+    }
+  }
+  // Remove from order groups
+  for (var i = 0; i < batchState.orders.length; i++) {
+    for (var j = 0; j < batchState.orders[i].devices.length; j++) {
+      if (batchState.orders[i].devices[j].sn === sn) {
+        batchState.orders[i].devices.splice(j, 1);
+        break;
+      }
+    }
+  }
+  // Clean up empty orders
+  batchState.orders = batchState.orders.filter(function(o) { return o.devices.length > 0; });
+  if (batchState.currentSN === sn) batchState.currentSN = null;
+
+  saveBatchState();
+  renderPendingList();
+}
+
+function deleteAllDevices() {
+  if (!confirm("确定要删除列表中所有设备吗？已测试的记录将保留在本地存储中。")) return;
+  batchState.devices = [];
+  batchState.orders = [];
+  batchState.currentSN = null;
+  saveBatchState();
+  renderPendingList();
 }
 
 function startBatchDevice(sn) {
@@ -8086,10 +8126,12 @@ function exportRecords() {
   <div class="batch-drawer-header">
     <span>⏳ 待测列表</span>
     <span class="batch-drawer-count" id="pendingDrawerCount">0台未测</span>
+    <button class="drawer-del-all" onclick="event.stopPropagation();deleteAllDevices()">全部删除</button>
     <button onclick="event.stopPropagation();togglePendingDrawer()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;">&times;</button>
   </div>
   <div class="batch-drawer-body" id="pendingDrawerItems"></div>
 </div>
 
+<button class="add-device-fab" onclick="openAddDeviceDialog()" title="新增设备">+</button>
 </body>
 </html>
