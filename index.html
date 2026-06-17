@@ -642,11 +642,6 @@ body {
 .batch-parse-result.warn { color: #e67e22; }
 
 /* Floating batch badge */
-.batch-float { position: fixed; top: 12px; left: 12px; z-index: 9999; background: var(--accent); color: #fff; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s; }
-.batch-float:hover { transform: scale(1.1); }
-.batch-float-icon { font-size: 20px; }
-.batch-float-badge { position: absolute; top: -4px; right: -4px; background: #ea4335; color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
-
 /* Pending drawer */
 .batch-drawer { position: fixed; top: 0; left: 0; width: 340px; max-width: 90vw; height: 100vh; z-index: 9998; background: #fff; box-shadow: 4px 0 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; animation: slideIn 0.2s ease; }
 @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
@@ -709,6 +704,7 @@ body {
   <div class="test-panel" id="testPanel">
     <div id="autoSaveBanner" style="display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;padding:10px 16px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:13px;color:#2e7d32;">检测到本地自动保存服务，是否启用？启用后所有测试记录将自动存入本地文件。</span><div style="display:flex;gap:8px;flex-shrink:0;"><button onclick="consentAutoSave()" style="padding:4px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">同意</button><button onclick="dismissAutoSave()" style="padding:4px 16px;background:#eee;color:#666;border:none;border-radius:4px;cursor:pointer;font-size:12px;">暂不</button></div></div>
     <button class="batch-open-btn" onclick="openBatchDialog()">📋 批量导入</button>
+    <button class="batch-open-btn" id="btnPendingDrawer" onclick="togglePendingDrawer()" style="display:none;">⏳ 待测列表 <span id="btnPendingCount">0</span>台</button>
 <div class="test-main">
       <div class="product-sidebar">
         <h4>产品型号</h4>
@@ -6947,9 +6943,7 @@ function loadBatchState() {
     var saved = JSON.parse(localStorage.getItem("batchState") || "null");
     if (saved && saved.devices && saved.devices.length > 0) {
       batchState = saved;
-      if (document.getElementById("batchFloat")) {
-        renderPendingList();
-      }
+      renderPendingList();
     }
   } catch(e) {}
 }
@@ -7381,35 +7375,31 @@ function addDevices() {
 
 function togglePendingDrawer() {
   var drawer = document.getElementById("batchDrawer");
-  var app = document.querySelector(".app");
   if (!drawer) return;
   if (drawer.style.display === "none" || !drawer.style.display) {
     drawer.style.display = "flex";
-    if (app) app.style.display = "none";
   } else {
     drawer.style.display = "none";
-    if (app) app.style.display = "";
   }
 }
 
 function renderPendingList() {
-  var floatEl = document.getElementById("batchFloat");
-  var badgeEl = document.getElementById("batchFloatBadge");
   var drawerItemsEl = document.getElementById("pendingDrawerItems");
   var drawerCountEl = document.getElementById("pendingDrawerCount");
+  var btnDrawer = document.getElementById("btnPendingDrawer");
+  var btnCount = document.getElementById("btnPendingCount");
 
   var untested = batchState.devices.filter(function(d) { return !d.tested; }).length;
 
   if (batchState.devices.length === 0) {
-    if (floatEl) floatEl.style.display = "none";
+    if (btnDrawer) btnDrawer.style.display = "none";
     var drawerEl = document.getElementById("batchDrawer");
     if (drawerEl) drawerEl.style.display = "none";
     return;
   }
 
-  // Show floating badge
-  if (floatEl) floatEl.style.display = "flex";
-  if (badgeEl) badgeEl.textContent = untested;
+  // Show toggle button with count
+  if (btnDrawer) { btnDrawer.style.display = ""; if (btnCount) btnCount.textContent = untested; }
   if (drawerCountEl) drawerCountEl.textContent = untested + "台未测";
 
   if (!drawerItemsEl) return;
@@ -8116,12 +8106,6 @@ function exportRecords() {
     <button class="batch-parse-btn" onclick="addDevicesFromDialog()">添加</button>
     <div class="batch-parse-result" id="addDeviceResult"></div>
   </div>
-</div>
-
-<!-- Floating batch badge -->
-<div class="batch-float" id="batchFloat" style="display:none" onclick="togglePendingDrawer()">
-  <span class="batch-float-icon">📋</span>
-  <span class="batch-float-badge" id="batchFloatBadge">0</span>
 </div>
 
 <!-- Pending drawer -->
