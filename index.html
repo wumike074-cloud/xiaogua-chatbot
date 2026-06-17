@@ -7381,11 +7381,14 @@ function addDevices() {
 
 function togglePendingDrawer() {
   var drawer = document.getElementById("batchDrawer");
+  var app = document.querySelector(".app");
   if (!drawer) return;
   if (drawer.style.display === "none" || !drawer.style.display) {
     drawer.style.display = "flex";
+    if (app) app.style.display = "none";
   } else {
     drawer.style.display = "none";
+    if (app) app.style.display = "";
   }
 }
 
