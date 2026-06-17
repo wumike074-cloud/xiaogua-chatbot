@@ -627,8 +627,10 @@ body {
 
 .batch-textarea { width: 100%; height: 240px; font-size: 12px; font-family: "SF Mono", "Cascadia Code", Consolas, monospace; border: 1px solid var(--border); border-radius: 6px; padding: 10px; resize: vertical; box-sizing: border-box; background: #fafafa; line-height: 1.6; }
 .batch-textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
-.batch-parse-btn { width: 100%; margin-top: 10px; padding: 10px 0; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
-.batch-parse-btn:hover { opacity: 0.9; }
+.batch-btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.batch-parse-btn { flex: 1; padding: 10px 0; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+.batch-btn-add { flex: 1; padding: 10px 0; background: #07a85c; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+.batch-parse-btn:hover, .batch-btn-add:hover { opacity: 0.9; }
 .batch-parse-result { font-size: 13px; margin-top: 8px; text-align: center; }
 .batch-parse-result.ok { color: #4caf50; font-weight: 600; }
 .batch-parse-result.warn { color: #e67e22; }
@@ -7202,6 +7204,84 @@ function parseAndRender() {
   setTimeout(function() { closeBatchDialog(); }, 500);
 }
 
+function addDevices() {
+  var textarea = document.getElementById("batchTextarea");
+  var resultEl = document.getElementById("batchParseResult");
+  if (!textarea) return;
+
+  var rawText = textarea.value;
+  if (!rawText.trim()) {
+    if (resultEl) { resultEl.textContent = "请先粘贴数据"; resultEl.className = "batch-parse-result warn"; }
+    return;
+  }
+
+  var parsed = parseBatchInput(rawText);
+  if (parsed.devices.length === 0) {
+    if (resultEl) { resultEl.textContent = "未识别到设备数据，请检查格式"; resultEl.className = "batch-parse-result warn"; }
+    return;
+  }
+
+  // Build existing SN set
+  var existingSNs = {};
+  if (batchState.devices) {
+    for (var i = 0; i < batchState.devices.length; i++) {
+      existingSNs[batchState.devices[i].sn] = true;
+    }
+  }
+
+  // Only add new SNs not already in the list
+  var addedDevices = [];
+  for (var i = 0; i < parsed.devices.length; i++) {
+    if (!existingSNs[parsed.devices[i].sn]) {
+      addedDevices.push(parsed.devices[i]);
+      existingSNs[parsed.devices[i].sn] = true;
+    }
+  }
+
+  if (addedDevices.length === 0) {
+    if (resultEl) { resultEl.textContent = "所有设备已在列表中，无需添加"; resultEl.className = "batch-parse-result warn"; }
+    return;
+  }
+
+  // Append new devices
+  if (!batchState.devices) batchState.devices = [];
+  if (!batchState.orders) batchState.orders = [];
+  for (var i = 0; i < addedDevices.length; i++) {
+    batchState.devices.push(addedDevices[i]);
+  }
+
+  // Merge new orders
+  for (var i = 0; i < parsed.orders.length; i++) {
+    var found = false;
+    for (var j = 0; j < batchState.orders.length; j++) {
+      if (batchState.orders[j].orderNumber === parsed.orders[i].orderNumber) { found = true; break; }
+    }
+    if (!found) batchState.orders.push(parsed.orders[i]);
+    // Also add devices to the order group
+    for (var j = 0; j < batchState.orders.length; j++) {
+      if (batchState.orders[j].orderNumber === parsed.orders[i].orderNumber) {
+        for (var k = 0; k < addedDevices.length; k++) {
+          if (addedDevices[k].order === parsed.orders[i].orderNumber) {
+            var alreadyInGroup = false;
+            for (var m = 0; m < batchState.orders[j].devices.length; m++) {
+              if (batchState.orders[j].devices[m].sn === addedDevices[k].sn) { alreadyInGroup = true; break; }
+            }
+            if (!alreadyInGroup) batchState.orders[j].devices.push(addedDevices[k]);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  var msg = "新增 " + addedDevices.length + " 台设备（共 " + batchState.devices.length + " 台）";
+  if (resultEl) { resultEl.textContent = msg; resultEl.className = "batch-parse-result ok"; }
+
+  saveBatchState();
+  renderPendingList();
+  setTimeout(function() { closeBatchDialog(); }, 800);
+}
+
 function togglePendingDrawer() {
   var drawer = document.getElementById("batchDrawer");
   if (!drawer) return;
@@ -7884,7 +7964,10 @@ function exportRecords() {
       <button onclick="closeBatchDialog()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">&times;</button>
     </div>
     <textarea class="batch-textarea" id="batchTextarea" placeholder="粘贴订单号 + SN + 注册码数据..."></textarea>
-    <button class="batch-parse-btn" onclick="parseAndRender()">解析</button>
+    <div class="batch-btn-row">
+      <button class="batch-parse-btn" onclick="parseAndRender()">解析并替换</button>
+      <button class="batch-btn-add" onclick="addDevices()">新增设备</button>
+    </div>
     <div class="batch-parse-result" id="batchParseResult"></div>
   </div>
 </div>
