@@ -619,8 +619,8 @@ body {
 /* Batch test import */
 .batch-open-btn { width: 100%; padding: 10px 0; background: #fff; color: var(--accent); border: 2px dashed var(--accent); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: background 0.15s; }
 .batch-open-btn:hover { background: #f0f4ff; }
-.add-device-fab { position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px; background: #07a85c; color: #fff; border: none; border-radius: 50%; font-size: 20px; cursor: pointer; box-shadow: 0 4px 16px rgba(7,168,92,0.4); z-index: 9999; transition: transform 0.15s, box-shadow 0.15s; display: flex; align-items: center; justify-content: center; }
-.add-device-fab:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(7,168,92,0.5); }
+.add-device-fab { position: fixed; bottom: 24px; right: 24px; padding: 10px 18px; background: #07a85c; color: #fff; border: none; border-radius: 24px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(7,168,92,0.45); z-index: 10001; transition: transform 0.15s, box-shadow 0.15s; }
+.add-device-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(7,168,92,0.55); }
 .pi-del { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; color: #999; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
 .pi-del:hover { background: #fee; color: #e74c3c; }
 .drawer-del-all { padding: 4px 12px; background: none; border: 1px solid #e74c3c; border-radius: 4px; color: #e74c3c; font-size: 12px; cursor: pointer; margin-left: auto; margin-right: 8px; transition: all 0.15s; }
@@ -8132,6 +8132,6 @@ function exportRecords() {
   <div class="batch-drawer-body" id="pendingDrawerItems"></div>
 </div>
 
-<button class="add-device-fab" onclick="openAddDeviceDialog()" title="新增设备">+</button>
+<button class="add-device-fab" onclick="openAddDeviceDialog()" title="新增设备">＋ 新增设备</button>
 </body>
 </html>
