@@ -8088,7 +8088,7 @@ function exportRecords() {
       <span style="font-weight:700;font-size:15px;">📋 批量导入</span>
       <button onclick="closeBatchDialog()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">&times;</button>
     </div>
-    <textarea class="batch-textarea" id="batchTextarea" placeholder="粘贴订单号 + SN + 注册码数据..."></textarea>
+    <textarea class="batch-textarea" id="batchTextarea"></textarea>
     <button class="batch-parse-btn" onclick="parseAndRender()">解析</button>
     <div class="batch-parse-result" id="batchParseResult"></div>
   </div>
@@ -8101,8 +8101,7 @@ function exportRecords() {
       <span style="font-weight:700;font-size:15px;">➕ 新增设备</span>
       <button onclick="closeAddDeviceDialog()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">&times;</button>
     </div>
-    <div style="font-size:12px;color:#999;margin-bottom:8px;">粘贴 SN + 注册码数据，仅添加列表中不存在的设备</div>
-    <textarea class="batch-textarea" id="addDeviceTextarea" placeholder="粘贴 SN + 注册码数据...&#10;支持格式：Tab分隔列 / 每行一个SN + 下一行注册码 / SN行后跟64位注册码"></textarea>
+    <textarea class="batch-textarea" id="addDeviceTextarea"></textarea>
     <button class="batch-parse-btn" onclick="addDevicesFromDialog()">添加</button>
     <div class="batch-parse-result" id="addDeviceResult"></div>
   </div>
