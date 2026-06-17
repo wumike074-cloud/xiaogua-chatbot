@@ -703,6 +703,7 @@ body {
   <div class="test-panel" id="testPanel">
     <div id="autoSaveBanner" style="display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;padding:10px 16px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:13px;color:#2e7d32;">检测到本地自动保存服务，是否启用？启用后所有测试记录将自动存入本地文件。</span><div style="display:flex;gap:8px;flex-shrink:0;"><button onclick="consentAutoSave()" style="padding:4px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">同意</button><button onclick="dismissAutoSave()" style="padding:4px 16px;background:#eee;color:#666;border:none;border-radius:4px;cursor:pointer;font-size:12px;">暂不</button></div></div>
     <button class="batch-open-btn" onclick="openBatchDialog()">📋 批量导入</button>
+    <button class="batch-open-btn" onclick="openAddDeviceDialog()" style="background:#07a85c;">➕ 新增设备</button>
 <div class="test-main">
       <div class="product-sidebar">
         <h4>产品型号</h4>
@@ -6962,6 +6963,97 @@ function closeBatchDialog() {
   if (overlay) overlay.style.display = "none";
 }
 
+function openAddDeviceDialog() {
+  var overlay = document.getElementById("addDeviceOverlay");
+  var textarea = document.getElementById("addDeviceTextarea");
+  var resultEl = document.getElementById("addDeviceResult");
+  if (overlay) overlay.style.display = "flex";
+  if (resultEl) { resultEl.textContent = ""; resultEl.className = "batch-parse-result"; }
+  if (textarea) { textarea.value = ""; textarea.focus(); }
+}
+
+function closeAddDeviceDialog() {
+  var overlay = document.getElementById("addDeviceOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+function addDevicesFromDialog() {
+  var textarea = document.getElementById("addDeviceTextarea");
+  var resultEl = document.getElementById("addDeviceResult");
+  if (!textarea) return;
+
+  var rawText = textarea.value;
+  if (!rawText.trim()) {
+    if (resultEl) { resultEl.textContent = "请先粘贴数据"; resultEl.className = "batch-parse-result warn"; }
+    return;
+  }
+
+  var parsed = parseBatchInput(rawText);
+  if (parsed.devices.length === 0) {
+    if (resultEl) { resultEl.textContent = "未识别到设备数据，请检查格式"; resultEl.className = "batch-parse-result warn"; }
+    return;
+  }
+
+  // Build existing SN set
+  var existingSNs = {};
+  if (batchState.devices) {
+    for (var i = 0; i < batchState.devices.length; i++) {
+      existingSNs[batchState.devices[i].sn] = true;
+    }
+  }
+
+  // Only keep new SNs
+  var addedDevices = [];
+  for (var i = 0; i < parsed.devices.length; i++) {
+    if (!existingSNs[parsed.devices[i].sn]) {
+      addedDevices.push(parsed.devices[i]);
+      existingSNs[parsed.devices[i].sn] = true;
+    }
+  }
+
+  if (addedDevices.length === 0) {
+    if (resultEl) { resultEl.textContent = "所有设备已在列表中，无需添加"; resultEl.className = "batch-parse-result warn"; }
+    return;
+  }
+
+  // Append new devices
+  if (!batchState.devices) batchState.devices = [];
+  if (!batchState.orders) batchState.orders = [];
+  for (var i = 0; i < addedDevices.length; i++) {
+    batchState.devices.push(addedDevices[i]);
+  }
+
+  // Merge orders from parsed data
+  for (var i = 0; i < parsed.orders.length; i++) {
+    var found = false;
+    for (var j = 0; j < batchState.orders.length; j++) {
+      if (batchState.orders[j].orderNumber === parsed.orders[i].orderNumber) { found = true; break; }
+    }
+    if (!found) batchState.orders.push(parsed.orders[i]);
+    for (var j = 0; j < batchState.orders.length; j++) {
+      if (batchState.orders[j].orderNumber === parsed.orders[i].orderNumber) {
+        for (var k = 0; k < addedDevices.length; k++) {
+          if (addedDevices[k].order === parsed.orders[i].orderNumber) {
+            var dup = false;
+            for (var m = 0; m < batchState.orders[j].devices.length; m++) {
+              if (batchState.orders[j].devices[m].sn === addedDevices[k].sn) { dup = true; break; }
+            }
+            if (!dup) batchState.orders[j].devices.push(addedDevices[k]);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  var msg = "新增 " + addedDevices.length + " 台设备（共 " + batchState.devices.length + " 台）";
+  if (resultEl) { resultEl.textContent = msg; resultEl.className = "batch-parse-result ok"; }
+
+  saveBatchState();
+  renderPendingList();
+  setTimeout(function() { closeAddDeviceDialog(); }, 800);
+}
+
 function detectModelFromSN(sn) {
   var s = sn.toUpperCase();
   // Letter-prefix models
@@ -7964,14 +8056,24 @@ function exportRecords() {
       <button onclick="closeBatchDialog()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">&times;</button>
     </div>
     <textarea class="batch-textarea" id="batchTextarea" placeholder="粘贴订单号 + SN + 注册码数据..."></textarea>
-    <div class="batch-btn-row">
-      <button class="batch-parse-btn" onclick="parseAndRender()">解析并替换</button>
-      <button class="batch-btn-add" onclick="addDevices()">新增设备</button>
-    </div>
+    <button class="batch-parse-btn" onclick="parseAndRender()">解析</button>
     <div class="batch-parse-result" id="batchParseResult"></div>
   </div>
 </div>
 
+<!-- Add Device Dialog -->
+<div class="batch-overlay" id="addDeviceOverlay" style="display:none">
+  <div class="batch-dialog">
+    <div class="batch-dialog-header">
+      <span style="font-weight:700;font-size:15px;">➕ 新增设备</span>
+      <button onclick="closeAddDeviceDialog()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">&times;</button>
+    </div>
+    <div style="font-size:12px;color:#999;margin-bottom:8px;">粘贴 SN + 注册码数据，仅添加列表中不存在的设备</div>
+    <textarea class="batch-textarea" id="addDeviceTextarea" placeholder="粘贴 SN + 注册码数据...&#10;支持格式：Tab分隔列 / 每行一个SN + 下一行注册码 / SN行后跟64位注册码"></textarea>
+    <button class="batch-parse-btn" onclick="addDevicesFromDialog()">添加</button>
+    <div class="batch-parse-result" id="addDeviceResult"></div>
+  </div>
+</div>
 
 <!-- Floating batch badge -->
 <div class="batch-float" id="batchFloat" style="display:none" onclick="togglePendingDrawer()">
