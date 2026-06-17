@@ -617,10 +617,10 @@ body {
 }
 
 /* Records popup - bottom half-screen */
-.records-popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10001; display: none; align-items: flex-end; justify-content: center; }
+.records-popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10001; display: none; align-items: center; justify-content: center; }
 .records-popup-overlay.show { display: flex; }
-.records-popup { background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-width: 900px; height: 55vh; display: flex; flex-direction: column; box-shadow: 0 -4px 24px rgba(0,0,0,0.15); animation: slideUp 0.25s ease; }
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.records-popup { background: #fff; border-radius: 16px; width: 90vw; max-width: 900px; height: 55vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.2); animation: popIn 0.2s ease; }
+@keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .records-popup-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .records-popup-header span { font-weight: 700; font-size: 15px; }
 .records-popup-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #999; line-height: 1; }
