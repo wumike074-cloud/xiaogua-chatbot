@@ -558,7 +558,7 @@ body {
 .tab-btn { padding: 12px 24px; border: none; background: none; font-size: 15px; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; font-family: inherit; }
 .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 .tab-btn:hover { color: var(--primary); }
-.test-panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+.test-panel { display: none; flex: 1; overflow: hidden; flex-direction: column; position: relative; }
 .test-panel.active { display: flex; }
 .chat-panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
 .chat-panel.active { display: flex; }
@@ -627,8 +627,10 @@ body {
 .records-popup-table-wrap { overflow: auto; flex: 1; padding: 0 8px 8px; }
 
 /* Batch test import */
-.batch-open-btn { width: 100%; padding: 10px 0; background: #fff; color: var(--accent); border: 2px dashed var(--accent); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: background 0.15s; }
-.batch-open-btn:hover { background: #f0f4ff; }
+.test-actions { position: fixed; bottom: 80px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 10000; }
+.test-actions button { padding: 10px 16px; background: #fff; border: 1px solid var(--border); border-radius: 20px; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s, box-shadow 0.15s; white-space: nowrap; box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-weight: 600; }
+.test-actions button:hover { background: #f5f6fa; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.test-actions .badge { background: var(--accent); color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
 .add-device-fab { position: fixed; bottom: 24px; right: 24px; padding: 10px 18px; background: #07a85c; color: #fff; border: none; border-radius: 24px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(7,168,92,0.45); z-index: 10001; transition: transform 0.15s, box-shadow 0.15s; }
 .add-device-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(7,168,92,0.55); }
 .pi-del { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; color: #999; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
@@ -713,8 +715,6 @@ body {
   </div>
   <div class="test-panel" id="testPanel">
     <div id="autoSaveBanner" style="display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;padding:10px 16px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:13px;color:#2e7d32;">检测到本地自动保存服务，是否启用？启用后所有测试记录将自动存入本地文件。</span><div style="display:flex;gap:8px;flex-shrink:0;"><button onclick="consentAutoSave()" style="padding:4px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">同意</button><button onclick="dismissAutoSave()" style="padding:4px 16px;background:#eee;color:#666;border:none;border-radius:4px;cursor:pointer;font-size:12px;">暂不</button></div></div>
-    <button class="batch-open-btn" onclick="openBatchDialog()">📋 批量导入</button>
-    <button class="batch-open-btn" id="btnPendingDrawer" onclick="togglePendingDrawer()" style="display:none;">⏳ 待测列表 <span id="btnPendingCount">0</span>台</button>
 <div class="test-main">
       <div class="product-sidebar">
         <h4>产品型号</h4>
@@ -722,7 +722,7 @@ body {
         <ul class="product-list" id="productList"></ul>
       </div>
       <div class="test-wizard" id="testWizard">
-        <div style="text-align:center;color:var(--text-secondary);padding:80px 20px;font-size:14px;">← 选择一个产品开始测试</div>
+        <div style="text-align:center;padding:60px 20px;"><div style="width:80px;height:80px;margin:0 auto 16px;border-radius:50%;overflow:hidden;"><img src="bot-avatar.png" alt="小瓜" style="width:100%;height:100%;object-fit:cover;"></div><div style="color:var(--text-secondary);font-size:14px;">选择一个产品开始测试</div></div>
       </div>
     </div>
     <div class="test-records" id="testRecords">
@@ -6466,7 +6466,7 @@ testStepsConfig["X1"] = [
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
   { type: "select", title: "固件版本", key: "firmware" },
-  { type: "input", title: "其他固件信息检查", placeholder: "", key: "otherVersion" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
   { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
   { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
   { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
@@ -6486,7 +6486,7 @@ testStepsConfig["Z1"] = [
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
   { type: "select", title: "固件版本", key: "firmware" },
-  { type: "input", title: "其他固件信息检查", placeholder: "", key: "otherVersion" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
   { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
   { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
   { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
@@ -6503,7 +6503,7 @@ testStepsConfig["P2"] = [
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
   { type: "select", title: "固件版本", key: "firmware" },
-  { type: "input", title: "其他固件信息检查", placeholder: "", key: "otherVersion" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
   { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
   { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
   { type: "input", title: "IMEI号", placeholder: "输入IMEI号，无需记录则留空", key: "imei" },
@@ -6515,7 +6515,7 @@ testStepsConfig["P2 Plus"] = [
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
   { type: "select", title: "固件版本", key: "firmware" },
-  { type: "input", title: "其他固件信息检查", placeholder: "", key: "otherVersion" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
   { type: "input", title: "IMU功能检测", placeholder: "IMU检测结果，有问题请备注", key: "imuTest" },
   { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
   { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
@@ -6592,7 +6592,7 @@ testStepsConfig["Y1"] = [
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
   { type: "select", title: "固件版本", options: ["lora","lora+U"], key: "firmware", description: "详细信息可搜索Y1 TEST查看" },
-  { type: "input", title: "其他固件信息检查", placeholder: "", key: "otherVersion" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
   { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
   { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
   { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
@@ -6620,13 +6620,22 @@ function switchTab(tab) {
     chatPanel.classList.add("active");
     testPanel.classList.remove("active");
     app.style.maxWidth = "800px";
+    toggleFixedActions(false);
   } else {
     chatPanel.classList.remove("active");
     testPanel.classList.add("active");
     app.style.maxWidth = "1200px";
+    toggleFixedActions(true);
     renderProductList();
     renderRecordsTable();
   }
+}
+
+function toggleFixedActions(show) {
+  var actions = document.querySelector(".test-actions");
+  if (actions) actions.style.display = show ? "" : "none";
+  var fab = document.querySelector(".add-device-fab");
+  if (fab) fab.style.display = show ? "" : "none";
 }
 
 // Render product list
@@ -6652,7 +6661,7 @@ function renderProductList() {
 function filterProducts() {
   currentProduct = null;
   renderProductList();
-  document.getElementById("testWizard").innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:80px 20px;font-size:14px;">← 选择一个产品开始测试</div>';
+  document.getElementById("testWizard").innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="width:80px;height:80px;margin:0 auto 16px;border-radius:50%;overflow:hidden;"><img src="bot-avatar.png" alt="小瓜" style="width:100%;height:100%;object-fit:cover;"></div><div style="color:var(--text-secondary);font-size:14px;">选择一个产品开始测试</div></div>';
 }
 
 function escapeJs(s) {
@@ -6680,7 +6689,7 @@ function renderStep() {
   var wizard = document.getElementById("testWizard");
   var steps = testStepsConfig[currentProduct] || [];
   if (!currentProduct || steps.length === 0) {
-    wizard.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:80px 20px;font-size:14px;">← 选择一个产品开始测试</div>';
+    wizard.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="width:80px;height:80px;margin:0 auto 16px;border-radius:50%;overflow:hidden;"><img src="bot-avatar.png" alt="小瓜" style="width:100%;height:100%;object-fit:cover;"></div><div style="color:var(--text-secondary);font-size:14px;">选择一个产品开始测试</div></div>';
     return;
   }
 
@@ -6784,14 +6793,24 @@ function renderStep() {
     }
   }
 
-  // Custom option toggle for select steps
+  // Custom option / firmware "其他" toggle for select steps
+  var radios = document.querySelectorAll('input[name="stepOpt"]');
   if (step.type === "select" && step.customOption) {
-    var radios = document.querySelectorAll('input[name="stepOpt"]');
     radios.forEach(function(r) {
       r.addEventListener("change", function() {
         var customDiv = document.getElementById("customOptionInput");
         if (customDiv) {
           customDiv.style.display = this.value === "自定义" ? "" : "none";
+        }
+      });
+    });
+  }
+  if (step.key === "firmware") {
+    radios.forEach(function(r) {
+      r.addEventListener("change", function() {
+        var fwOtherDiv = document.getElementById("fwOtherInput");
+        if (fwOtherDiv) {
+          fwOtherDiv.style.display = this.value === "其他" ? "" : "none";
         }
       });
     });
@@ -6961,9 +6980,56 @@ var batchState = {
 function saveBatchState() {
   if (batchState.devices.length > 0) {
     localStorage.setItem("batchState", JSON.stringify(batchState));
+    saveBatchStateToServer();
   } else {
     localStorage.removeItem("batchState");
+    deleteBatchStateOnServer();
   }
+}
+
+function saveBatchStateToServer() {
+  if (autoSaveServer !== "server") return;
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", AUTO_SAVE_URL + "/batch-state", true);
+  xhr.timeout = 3000;
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.send(JSON.stringify(batchState));
+}
+
+function deleteBatchStateOnServer() {
+  if (autoSaveServer !== "server") return;
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", AUTO_SAVE_URL + "/batch-state", true);
+  xhr.timeout = 3000;
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.send("null");
+}
+
+function loadBatchStateFromServer(callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", AUTO_SAVE_URL + "/batch-state", true);
+  xhr.timeout = 3000;
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data && data.devices && data.devices.length > 0) {
+          // Merge with localStorage: server wins for persistence, but preserve local if server empty
+          var localState = null;
+          try { localState = JSON.parse(localStorage.getItem("batchState") || "null"); } catch(e) {}
+          batchState = data;
+          saveBatchState(); // sync to localStorage
+          renderPendingList();
+          if (callback) callback(true);
+          return;
+        }
+      } catch(e) {}
+    }
+    if (callback) callback(false);
+  };
+  xhr.onerror = function() { if (callback) callback(false); };
+  xhr.ontimeout = function() { if (callback) callback(false); };
+  xhr.send();
 }
 
 function loadBatchState() {
@@ -7611,6 +7677,7 @@ function showAutoSavePrompt() {
 
 function consentAutoSave() {
   autoSaveEnabled = true;
+  autoSaveServer = "server";
   var banner = document.getElementById("autoSaveBanner");
   if (banner) banner.style.display = "none";
   // Merge server data, then push local data to server
@@ -7620,6 +7687,15 @@ function consentAutoSave() {
     }
     // Push existing localStorage records to server
     persistToFile();
+    // Load batch state from server, fallback to localStorage
+    loadBatchStateFromServer(function(loaded) {
+      if (!loaded) {
+        // No server data, keep localStorage state
+        loadBatchState();
+      }
+      // Push current state to server
+      saveBatchStateToServer();
+    });
     updateAutoSaveUI();
   });
 }
@@ -7928,6 +8004,13 @@ function finishTest() {
     }
   });
 
+  function buildFirmwareStr(sd) {
+    var fw = sd["firmware"] === "其他" ? (sd["firmware_other"] || "其他") : (sd["firmware"] || "");
+    var ov = sd["otherVersion"] || "";
+    if (fw && ov) return fw + " (" + ov + ")";
+    return fw || ov;
+  }
+
   // Build record
   var now = new Date();
   var dateStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
@@ -7944,8 +8027,7 @@ function finishTest() {
     tester: stepData["tester"] || "",
     model: currentProduct,
     sn: stepData["sn"] || "",
-    firmware: stepData["firmware"] === "其他" ? (stepData["firmware_other"] || "其他") : (stepData["firmware"] || ""),
-    otherVersion: stepData["otherVersion"] || "",
+    firmware: buildFirmwareStr(stepData),
     registration: stepData["registration"] === "自定义" ? (stepData["registration_custom"] || "自定义") : (stepData["registration"] || ""),
     regCode: stepData["regCode"] || "",
     testContent: stepData["testContent"] || stepTitles,
@@ -8002,8 +8084,8 @@ function renderRecordsTable() {
     return;
   }
 
-  // Inline table: show last 3
-  var displayRecords = records.slice(-3);
+  // Inline table: show latest 3
+  var displayRecords = records.slice(0, 3);
   if (toggleBtn) {
     toggleBtn.style.display = "";
     toggleBtn.textContent = "展开全部 (" + records.length + "条)";
@@ -8189,6 +8271,10 @@ function exportRecords() {
   </div>
 </div>
 
-<button class="add-device-fab" onclick="openAddDeviceDialog()" title="新增设备">＋ 新增设备</button>
+<div class="test-actions" style="display:none">
+  <button onclick="openBatchDialog()" title="批量导入">批量导入</button>
+  <button id="btnPendingDrawer" onclick="togglePendingDrawer()" style="display:none;" title="待测列表">待测 <span class="badge" id="btnPendingCount">0</span></button>
+</div>
+<button class="add-device-fab" onclick="openAddDeviceDialog()" title="新增设备" style="display:none">＋ 新增设备</button>
 </body>
 </html>
