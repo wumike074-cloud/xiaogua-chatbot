@@ -4858,12 +4858,22 @@ function detectOrderQuery(query) {
   // Check for "订单：" prefix
   const orderPrefix = /^订单[：:]\s*(.+)/i;
   const match = trimmed.match(orderPrefix);
-  if (!match) return null;
-  const orderNum = match[1].trim();
-  if (!orderNum) return null;
-  const result = lookupOrder(orderNum);
-  if (result) return result;
-  return { order: orderNum, sns: null };
+  if (match) {
+    const orderNum = match[1].trim();
+    if (!orderNum) return null;
+    const result = lookupOrder(orderNum);
+    if (result) return result;
+    return { order: orderNum, sns: null };
+  }
+  // Auto-detect SXH-prefixed order numbers
+  const sxhMatch = trimmed.match(/\b(SXH\d+)\b/i);
+  if (sxhMatch) {
+    const orderNum = sxhMatch[1];
+    const result = lookupOrder(orderNum);
+    if (result) return result;
+    return { order: orderNum, sns: null };
+  }
+  return null;
 }
 
 function renderOrderResult(result) {
@@ -4941,7 +4951,7 @@ function detectSNQuery(query) {
     const snPatterns = [
       /\b([A-Za-z]{1,3}\d{4,}[A-Za-z]?\d*)\b/g,  // e.g. Y11L02131, TS1221531
       /\b(\d{6,})\b/g,                                 // e.g. 1421901635
-      /\b([A-Z]+\d+[A-Z]*\d*)\b/g,                     // e.g. UT32330390233
+      /\b(?!SXH)([A-Z]+\d+[A-Z]*\d*)\b/g,              // e.g. UT32330390233 (exclude SXH order numbers)
     ];
     for (const pattern of snPatterns) {
       let m;
@@ -7200,8 +7210,8 @@ function parseBatchInput(text) {
     var line = lines[i].trim();
     if (!line) continue;
 
-    // Order number: starts with XYZ or SXHB (case-insensitive)
-    if (/^xyz/i.test(line) || /^sxhb/i.test(line)) {
+    // Order number: starts with XYZ, SXH, or SXHB (case-insensitive)
+    if (/^xyz/i.test(line) || /^sxh/i.test(line)) {
       currentOrder = line.toUpperCase();
       var found = false;
       for (var o = 0; o < orders.length; o++) {
@@ -7241,7 +7251,7 @@ function parseBatchInput(text) {
           // Check for order number in the same line
           var ord = "";
           for (var ck = 0; ck < parts.length; ck++) {
-            if (/^(xyz|sxhb)/i.test(parts[ck].trim())) {
+            if (/^(xyz|sxh)/i.test(parts[ck].trim())) {
               ord = parts[ck].trim().toUpperCase();
               break;
             }
