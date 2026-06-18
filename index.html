@@ -6629,6 +6629,21 @@ testStepsConfig["S20"] = [
   { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
   { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
 ];
+testStepsConfig["SAgro200"] = [
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "input", title: "平板SN", placeholder: "输入平板SN", key: "padSN" },
+  { type: "select", title: "注册期限", options: ["永久","其他"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "input", title: "IMEI号", placeholder: "输入IMEI号，无需记录则留空", key: "imei" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["SAgro150"] = testStepsConfig["SAgro200"];
+testStepsConfig["SAgro100"] = testStepsConfig["SAgro200"];
+testStepsConfig["SAgro10"] = testStepsConfig["SAgro200"];
+testStepsConfig["SAgro180"] = testStepsConfig["SAgro200"];
+
 testStepsConfig["Y1"] = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
@@ -8287,7 +8302,7 @@ function finishTest() {
     registration: stepData["registration"] === "自定义" ? (stepData["registration_custom"] || "自定义") : (stepData["registration"] || ""),
     regCode: stepData["regCode"] || "",
     testContent: stepData["testContent"] || stepTitles,
-    importantInfo: stepData["importantInfo"] || stepData["imuReg"] || "",
+    importantInfo: stepData["importantInfo"] || stepData["imuReg"] || stepData["padSN"] || "",
     remark1: [stepData["imei"], stepData["remark1"]].filter(Boolean).join("; "),
     remark2: stepData["remark2"] || "",
     result: hasFail ? "fail" : "pass",
