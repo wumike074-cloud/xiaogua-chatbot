@@ -7113,7 +7113,8 @@ function loadBatchState() {
       var prevCurrentSN = batchState.currentSN;
       batchState = mergeBatchStates(cloudData, batchState);
       batchState.currentSN = prevCurrentSN;
-      saveBatchState(); // sync to localStorage
+      // Write to localStorage directly (don't trigger another cloud sync)
+      localStorage.setItem("batchState", JSON.stringify(batchState));
       renderPendingList();
       return;
     }
@@ -7559,6 +7560,7 @@ function togglePendingDrawer() {
   var drawer = document.getElementById("batchDrawer");
   if (!drawer) return;
   if (drawer.style.display === "none" || !drawer.style.display) {
+    renderPendingList();
     drawer.style.display = "flex";
   } else {
     drawer.style.display = "none";
@@ -7760,6 +7762,7 @@ var AUTO_SAVE_URL = "http://" + window.location.hostname + ":8765";
 var SUPABASE_URL = "https://wqtkyuarvddpyehpjzqe.supabase.co";
 var SUPABASE_KEY = "sb_publishable_xbZNH82SqHbLqbbF34mSTQ_NLoAFO-j";
 var _supabase;
+var _syncPending = false;
 
 function getSupabase() {
   if (!_supabase && typeof supabase !== "undefined") {
@@ -7770,7 +7773,8 @@ function getSupabase() {
 
 function syncBatchToCloud() {
   var sb = getSupabase();
-  if (!sb) return;
+  if (!sb || _syncPending) return;
+  _syncPending = true;
   // Read-modify-write to avoid overwriting concurrent changes
   sb.from("batch_state").select("data").eq("id", 1).maybeSingle().then(function(r) {
     var cloudData = (r.data && r.data.data) ? r.data.data : { devices: [], orders: [], currentSN: null };
@@ -7778,14 +7782,16 @@ function syncBatchToCloud() {
     batchState = merged;
     if (merged.devices.length > 0) {
       sb.from("batch_state").upsert({ id: 1, data: merged, updated_at: new Date().toISOString() }).then(function(r2) {
+        _syncPending = false;
         if (r2.error) console.warn("[Supabase] batch_state upsert failed:", r2.error.message);
       });
     } else {
       sb.from("batch_state").delete().eq("id", 1).then(function(r2) {
+        _syncPending = false;
         if (r2.error) console.warn("[Supabase] batch_state delete failed:", r2.error.message);
       });
     }
-  });
+  }).catch(function() { _syncPending = false; });
 }
 
 function mergeBatchStates(cloud, local) {
@@ -7932,7 +7938,7 @@ setInterval(function() {
       var prevSN = batchState.currentSN;
       batchState = merged;
       batchState.currentSN = prevSN;
-      saveBatchState();
+      localStorage.setItem("batchState", JSON.stringify(batchState));
       renderPendingList();
     }
   });
