@@ -7130,25 +7130,32 @@ function loadBatchState() {
       // Still check cloud in background for multi-tab sync (only when local has devices)
       loadBatchFromCloud(function(cloudData) {
         if (!cloudData || !cloudData.devices) return;
-        var myCloudDevices = cloudData.devices.filter(function(d) { return d.terminalId === tid; });
+        // Use same filter as renderPendingList (includes legacy devices without terminalId)
+        var myCloudDevices = cloudData.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
         var localMap = {};
         batchState.devices.forEach(function(d) { localMap[d.sn] = d; });
         // Only update from cloud if local has devices to compare (don't resurrect deleted list)
         if (batchState.devices.length === 0) return;
         var changed = false;
-        myCloudDevices.forEach(function(d) { if (!localMap[d.sn] || localMap[d.sn].tested !== d.tested) changed = true; });
-        batchState.devices.forEach(function(d) { if (!myCloudDevices.some(function(cd) { return cd.sn === d.sn; })) changed = true; });
+        // Only sync tested flag updates for devices that exist locally
+        myCloudDevices.forEach(function(d) {
+          if (localMap[d.sn] && localMap[d.sn].tested !== d.tested) changed = true;
+        });
+        // Check for removed devices (cloud no longer has them)
+        if (!changed) {
+          var cloudMap = {};
+          myCloudDevices.forEach(function(d) { cloudMap[d.sn] = true; });
+          batchState.devices.forEach(function(d) { if (!cloudMap[d.sn]) changed = true; });
+        }
         if (changed) {
-          // Rebuild with latest from cloud for this terminal
-          batchState.devices = myCloudDevices;
-          batchState.orders = [];
-          var om = {};
-          myCloudDevices.forEach(function(d) {
-            var oid = d.order || "";
-            if (oid && !om[oid]) { om[oid] = { orderNumber: oid, devices: [] }; }
-            if (oid) om[oid].devices.push(d);
+          // Merge: keep local devices, update tested flags from cloud
+          var cloudTestedMap = {};
+          myCloudDevices.forEach(function(d) { cloudTestedMap[d.sn] = d.tested; });
+          batchState.devices.forEach(function(d) {
+            if (cloudTestedMap.hasOwnProperty(d.sn)) d.tested = cloudTestedMap[d.sn];
           });
-          for (var ok in om) { if (om.hasOwnProperty(ok)) batchState.orders.push(om[ok]); }
+          // Remove devices that don't exist in cloud (deleted by another tab)
+          batchState.devices = batchState.devices.filter(function(d) { return cloudMap[d.sn] !== false; });
           localStorage.setItem("batchState", JSON.stringify(batchState));
           renderPendingList();
         }
@@ -8013,17 +8020,14 @@ setInterval(function() {
       });
     }
     if (changed) {
-      var myOrders = [];
-      var om = {};
-      myCloudDevices.forEach(function(d) {
-        if (!localMap[d.sn]) return; // skip devices not in local
-        var oid = d.order || "";
-        if (oid && !om[oid]) { om[oid] = { orderNumber: oid, devices: [] }; }
-        if (oid) om[oid].devices.push(d);
+      // Merge tested flags from cloud into local devices (don't replace entire list)
+      var cloudTestedMap = {};
+      myCloudDevices.forEach(function(d) { cloudTestedMap[d.sn] = d.tested; });
+      batchState.devices.forEach(function(d) {
+        if (cloudTestedMap.hasOwnProperty(d.sn)) d.tested = cloudTestedMap[d.sn];
       });
-      for (var ok in om) { if (om.hasOwnProperty(ok)) myOrders.push(om[ok]); }
-      var prevSN = batchState.currentSN;
-      batchState = { devices: myCloudDevices.filter(function(d) { return localMap[d.sn]; }), orders: myOrders, currentSN: prevSN };
+      // Remove local devices not in cloud (deleted by another tab)
+      batchState.devices = batchState.devices.filter(function(d) { return cloudMap[d.sn] !== false; });
       localStorage.setItem("batchState", JSON.stringify(batchState));
       renderPendingList();
     }
