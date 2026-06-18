@@ -96,3 +96,6 @@ addFW(["SDL2", "DL", "SL100", "SP100"], []);
 
 // SC series
 addFW(["SC260", "SC200", "SC300", "SC280", "SC60"], []);
+
+// SV100 series — 待更新，稍后提供固件版本
+addFW(["SV100", "SV100 Dual", "SV100 INS", "SV100 INS-D"], []);

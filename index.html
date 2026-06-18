@@ -6465,7 +6465,8 @@ const ALL_PRODUCTS = [
   "Sfaira one","Sfaira one plus","Sfaira one lite",
   "S20","SAgro200","SAgro150","SAgro100","SAgro10","SAgro180",
   "SDL2","DL","SL100","SP100",
-  "SC260","SC200","SC300","SC280","SC60"
+  "SC260","SC200","SC300","SC280","SC60",
+  "SV100","SV100 Dual","SV100 INS","SV100 INS-D"
 ];
 
 // Test step configs (each product has an array of steps)
@@ -6511,6 +6512,10 @@ testStepsConfig["Orion one"] = testStepsConfig["Z1"];
 testStepsConfig["Orion one-AR"] = testStepsConfig["Z1"];
 testStepsConfig["Orion one-Laser"] = testStepsConfig["Z1"];
 testStepsConfig["XBase"] = testStepsConfig["X1"];
+testStepsConfig["SV100"] = testStepsConfig["X1"];
+testStepsConfig["SV100 Dual"] = testStepsConfig["X1"];
+testStepsConfig["SV100 INS"] = testStepsConfig["X1"];
+testStepsConfig["SV100 INS-D"] = testStepsConfig["X1"];
 testStepsConfig["P2"] = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
@@ -7611,9 +7616,10 @@ function startBatchDevice(sn) {
     model = confirm("18系列SN，请选择型号：\n「确定」= P2\n「取消」= P2 Plus") ? "P2" : "P2 Plus";
   }
   if (model === "SV100系列") {
-    var choice = prompt("16系列SN，请选择型号：\n输入 1 = SV100\n输入 2 = SV100 DUAL\n输入 3 = SV100 INS", "1");
-    if (choice === "2") model = "SV100 DUAL";
+    var choice = prompt("16系列SN，请选择型号：\n输入 1 = SV100\n输入 2 = SV100 Dual\n输入 3 = SV100 INS\n输入 4 = SV100 INS-D", "1");
+    if (choice === "2") model = "SV100 Dual";
     else if (choice === "3") model = "SV100 INS";
+    else if (choice === "4") model = "SV100 INS-D";
     else model = "SV100";
   }
   if (!model || model === "未知型号" || !testStepsConfig[model] || testStepsConfig[model].length === 0) {
