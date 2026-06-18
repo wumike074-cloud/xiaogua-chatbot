@@ -99,15 +99,9 @@ addFW(["SC260", "SC200", "SC300", "SC280", "SC60"], []);
 
 // SV100 series — 待更新，稍后提供固件版本
 addFW(["SV100", "SV100 Dual", "SV100 INS-D"], [
-  "ver601AA",
-  "1.0.G18UZ",
-  "1.0.G18XQ",
-  "1.0.G18XK",
-  "1.0.G18XEI",
-  "1.0.G18XG",
-  "1.0.G18VZ",
-  "1.0.G17UZ",
-  "1.0.G17TY-20231228"
+  "1.0.G18XQ-Russia",
+  "1.0.G18XB-NL",
+  "1.0.G18XJRX-0903"
 ]);
 
 // SV100 INS — firmware is text input, no dropdown needed
