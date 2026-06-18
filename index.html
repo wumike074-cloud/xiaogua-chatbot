@@ -7092,20 +7092,8 @@ function loadBatchState() {
   loadBatchFromCloud(function(cloudData) {
     if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
       // Merge cloud data with in-memory state to preserve tested flags
-      var memMap = {};
-      for (var i = 0; i < batchState.devices.length; i++) {
-        memMap[batchState.devices[i].sn] = batchState.devices[i];
-      }
-      for (var i = 0; i < cloudData.devices.length; i++) {
-        var cd = cloudData.devices[i];
-        var md = memMap[cd.sn];
-        if (md) {
-          if (md.tested) cd.tested = true;
-          if (md.regCode && !cd.regCode) cd.regCode = md.regCode;
-        }
-      }
       var prevCurrentSN = batchState.currentSN;
-      batchState = cloudData;
+      batchState = mergeBatchStates(cloudData, batchState);
       batchState.currentSN = prevCurrentSN;
       saveBatchState(); // sync to localStorage
       renderPendingList();
@@ -7765,15 +7753,62 @@ function getSupabase() {
 function syncBatchToCloud() {
   var sb = getSupabase();
   if (!sb) return;
-  if (batchState.devices.length > 0) {
-    sb.from("batch_state").upsert({ id: 1, data: batchState, updated_at: new Date().toISOString() }).then(function(r) {
-      if (r.error) console.warn("[Supabase] batch_state upsert failed:", r.error.message);
-    });
-  } else {
-    sb.from("batch_state").delete().eq("id", 1).then(function(r) {
-      if (r.error) console.warn("[Supabase] batch_state delete failed:", r.error.message);
-    });
+  // Read-modify-write to avoid overwriting concurrent changes
+  sb.from("batch_state").select("data").eq("id", 1).maybeSingle().then(function(r) {
+    var cloudData = (r.data && r.data.data) ? r.data.data : { devices: [], orders: [], currentSN: null };
+    var merged = mergeBatchStates(cloudData, batchState);
+    batchState = merged;
+    if (merged.devices.length > 0) {
+      sb.from("batch_state").upsert({ id: 1, data: merged, updated_at: new Date().toISOString() }).then(function(r2) {
+        if (r2.error) console.warn("[Supabase] batch_state upsert failed:", r2.error.message);
+      });
+    } else {
+      sb.from("batch_state").delete().eq("id", 1).then(function(r2) {
+        if (r2.error) console.warn("[Supabase] batch_state delete failed:", r2.error.message);
+      });
+    }
+  });
+}
+
+function mergeBatchStates(cloud, local) {
+  var cloudMap = {};
+  for (var i = 0; i < cloud.devices.length; i++) {
+    cloudMap[cloud.devices[i].sn] = cloud.devices[i];
   }
+  // Add local devices not in cloud
+  for (var i = 0; i < local.devices.length; i++) {
+    var ld = local.devices[i];
+    if (!cloudMap[ld.sn]) {
+      cloud.devices.push(ld);
+      cloudMap[ld.sn] = ld;
+    } else {
+      // Preserve tested flag: local wins if more recent (just tested)
+      if (ld.tested && !cloudMap[ld.sn].tested) cloudMap[ld.sn].tested = true;
+      // Preserve regCode
+      if (ld.regCode && !cloudMap[ld.sn].regCode) cloudMap[ld.sn].regCode = ld.regCode;
+    }
+  }
+  // Merge orders
+  var cloudOrderMap = {};
+  for (var i = 0; i < cloud.orders.length; i++) {
+    cloudOrderMap[cloud.orders[i].orderNumber] = cloud.orders[i];
+  }
+  for (var i = 0; i < local.orders.length; i++) {
+    var lo = local.orders[i];
+    if (!cloudOrderMap[lo.orderNumber]) {
+      cloud.orders.push(lo);
+      cloudOrderMap[lo.orderNumber] = lo;
+    } else {
+      // Merge devices in orders
+      var co = cloudOrderMap[lo.orderNumber];
+      var coSNs = {};
+      for (var j = 0; j < co.devices.length; j++) { coSNs[co.devices[j].sn] = true; }
+      for (var j = 0; j < lo.devices.length; j++) {
+        if (!coSNs[lo.devices[j].sn]) { co.devices.push(lo.devices[j]); coSNs[lo.devices[j].sn] = true; }
+      }
+    }
+  }
+  return cloud;
 }
 
 function loadBatchFromCloud(callback) {
@@ -7845,6 +7880,46 @@ function migrateLocalToCloud() {
     }
   });
 }
+
+// Periodic cloud refresh — keeps all users in sync
+var _lastCloudRefresh = 0;
+setInterval(function() {
+  var sb = getSupabase();
+  if (!sb) return;
+  // Only refresh if user is on the test tab or has been recently
+  var testPanel = document.getElementById("testPanel");
+  if (!testPanel || !testPanel.classList.contains("active")) return;
+  loadBatchFromCloud(function(cloudData) {
+    if (!cloudData || !cloudData.devices) return;
+    var merged = mergeBatchStates(cloudData, batchState);
+    var changed = false;
+    // Check for new devices from others
+    if (merged.devices.length !== batchState.devices.length) changed = true;
+    else {
+      for (var i = 0; i < merged.devices.length; i++) {
+        var md = merged.devices[i];
+        var found = false;
+        for (var j = 0; j < batchState.devices.length; j++) {
+          if (batchState.devices[j].sn === md.sn) {
+            if (batchState.devices[j].tested !== md.tested) changed = true;
+            found = true;
+            break;
+          }
+        }
+        if (!found) changed = true;
+        if (changed) break;
+      }
+    }
+    if (changed) {
+      var prevSN = batchState.currentSN;
+      batchState = merged;
+      batchState.currentSN = prevSN;
+      saveBatchState();
+      renderPendingList();
+    }
+  });
+}, 30000);
+
 var autoSaveEnabled = false;      // user has consented
 
 // -- Show consent banner when server is detected --
