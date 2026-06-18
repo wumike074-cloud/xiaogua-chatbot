@@ -7155,13 +7155,14 @@ function loadBatchState() {
     }
   } catch(e) {}
   // No localStorage — try cloud (first visit or cache cleared)
-  // In recovery mode, show ALL cloud devices since terminalId may be lost
+  // Recovery: since we can't identify which devices were ours, claim all locally
+  // Do NOT sync back to cloud to avoid affecting other users
   loadBatchFromCloud(function(cloudData) {
     if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
-      // Recover all devices — tag legacy ones with current terminalId so user owns them
       var recovered = [];
       cloudData.devices.forEach(function(d) {
-        if (!d.terminalId) d.terminalId = tid;
+        d = Object.assign({}, d); // shallow copy to avoid mutating cloud reference
+        d.terminalId = tid;
         recovered.push(d);
       });
       var myOrders = [];
@@ -7175,8 +7176,7 @@ function loadBatchState() {
       batchState = { devices: recovered, orders: myOrders, currentSN: null };
       localStorage.setItem("batchState", JSON.stringify(batchState));
       renderPendingList();
-      // Re-tag recovered devices in cloud with current terminalId
-      syncBatchToCloud();
+      // Do NOT syncBatchToCloud here — avoid overwriting other terminals' devices
     }
   });
 }
@@ -7835,8 +7835,14 @@ function syncBatchToCloud() {
     var cloudData = (r.data && r.data.data) ? r.data.data : { devices: [], orders: [], currentSN: null };
     // Remove this terminal's devices from cloud, then add local ones
     var otherDevices = cloudData.devices.filter(function(d) { return d.terminalId !== tid; });
-    // Only sync devices that belong to this terminal (safety filter)
-    var myDevices = batchState.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
+    var otherSNs = {};
+    otherDevices.forEach(function(d) { otherSNs[d.sn] = true; });
+    // Only sync devices that belong to this terminal, dedupe against cloud
+    var myDevices = batchState.devices.filter(function(d) {
+      if (d.terminalId && d.terminalId !== tid) return false;
+      if (otherSNs[d.sn]) return false; // already in cloud under another terminal
+      return true;
+    });
     var mergedDevices = otherDevices.concat(myDevices);
     // Rebuild orders from merged devices
     var orderMap = {};
