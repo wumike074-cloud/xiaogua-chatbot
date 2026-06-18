@@ -6512,6 +6512,19 @@ testStepsConfig["Orion one"] = testStepsConfig["Z1"];
 testStepsConfig["Orion one-AR"] = testStepsConfig["Z1"];
 testStepsConfig["Orion one-Laser"] = testStepsConfig["Z1"];
 testStepsConfig["XBase"] = testStepsConfig["X1"];
+testStepsConfig["Horus"] = [
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "固件版本", key: "firmware" },
+  { type: "select", title: "IMU注册", options: ["影像加IMU全注册","仅IMU注册"], key: "imuReg" },
+  { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
+  { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
+  { type: "input", title: "IMEI号", placeholder: "输入IMEI号，无需记录则留空", key: "imei" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
 testStepsConfig["SV100"] = testStepsConfig["X1"];
 testStepsConfig["SV100 Dual"] = testStepsConfig["X1"];
 testStepsConfig["SV100 INS-D"] = testStepsConfig["X1"];
@@ -8199,7 +8212,7 @@ function finishTest() {
     registration: stepData["registration"] === "自定义" ? (stepData["registration_custom"] || "自定义") : (stepData["registration"] || ""),
     regCode: stepData["regCode"] || "",
     testContent: stepData["testContent"] || stepTitles,
-    importantInfo: stepData["importantInfo"] || "",
+    importantInfo: stepData["importantInfo"] || stepData["imuReg"] || "",
     remark1: [stepData["imei"], stepData["remark1"]].filter(Boolean).join("; "),
     remark2: stepData["remark2"] || "",
     result: hasFail ? "fail" : "pass",
