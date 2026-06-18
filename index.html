@@ -7116,12 +7116,16 @@ function loadBatchState() {
       batchState = saved;
       if (needsSync) { localStorage.setItem("batchState", JSON.stringify(batchState)); syncBatchToCloud(); }
       renderPendingList();
-      // Still check cloud in background for multi-tab sync
+      // If local list is intentionally empty (user deleted all), skip cloud sync
+      if (batchState.devices.length === 0 && saved && typeof saved.devices !== "undefined") return;
+      // Still check cloud in background for multi-tab sync (only when local has devices)
       loadBatchFromCloud(function(cloudData) {
         if (!cloudData || !cloudData.devices) return;
         var myCloudDevices = cloudData.devices.filter(function(d) { return d.terminalId === tid; });
         var localMap = {};
         batchState.devices.forEach(function(d) { localMap[d.sn] = d; });
+        // Only update from cloud if local has devices to compare (don't resurrect deleted list)
+        if (batchState.devices.length === 0) return;
         var changed = false;
         myCloudDevices.forEach(function(d) { if (!localMap[d.sn] || localMap[d.sn].tested !== d.tested) changed = true; });
         batchState.devices.forEach(function(d) { if (!myCloudDevices.some(function(cd) { return cd.sn === d.sn; })) changed = true; });
@@ -7967,6 +7971,8 @@ setInterval(function() {
   loadBatchFromCloud(function(cloudData) {
     if (!cloudData || !cloudData.devices) return;
     var tid = getTerminalId();
+    // If local list is intentionally empty, skip cloud merge (respect user's delete)
+    if (batchState.devices.length === 0 && batchState.orders.length === 0) return;
     // Only track this terminal's devices from cloud
     var myCloudDevices = cloudData.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
     // Build a map for quick lookup
@@ -7975,12 +7981,11 @@ setInterval(function() {
     var localMap = {};
     batchState.devices.forEach(function(d) { localMap[d.sn] = d; });
     var changed = false;
-    // Check for new/updated devices in cloud
+    // Only detect updates to existing devices, not new devices (don't resurrect deleted)
     myCloudDevices.forEach(function(d) {
-      if (!localMap[d.sn]) { changed = true; }
-      else if (localMap[d.sn].tested !== d.tested) { changed = true; }
+      if (localMap[d.sn] && localMap[d.sn].tested !== d.tested) { changed = true; }
     });
-    // Check for removed devices
+    // Check for removed devices (someone else deleted)
     if (!changed) {
       batchState.devices.forEach(function(d) {
         if (!cloudMap[d.sn]) { changed = true; }
@@ -7990,13 +7995,14 @@ setInterval(function() {
       var myOrders = [];
       var om = {};
       myCloudDevices.forEach(function(d) {
+        if (!localMap[d.sn]) return; // skip devices not in local
         var oid = d.order || "";
         if (oid && !om[oid]) { om[oid] = { orderNumber: oid, devices: [] }; }
         if (oid) om[oid].devices.push(d);
       });
       for (var ok in om) { if (om.hasOwnProperty(ok)) myOrders.push(om[ok]); }
       var prevSN = batchState.currentSN;
-      batchState = { devices: myCloudDevices, orders: myOrders, currentSN: prevSN };
+      batchState = { devices: myCloudDevices.filter(function(d) { return localMap[d.sn]; }), orders: myOrders, currentSN: prevSN };
       localStorage.setItem("batchState", JSON.stringify(batchState));
       renderPendingList();
     }
