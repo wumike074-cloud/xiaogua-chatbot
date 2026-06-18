@@ -6657,6 +6657,16 @@ var currentProduct = null;
 var currentStep = 0;
 var stepData = {};
 
+// Terminal ID for per-user pending list isolation
+function getTerminalId() {
+  var id = localStorage.getItem("_terminalId");
+  if (!id) {
+    id = "T" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem("_terminalId", id);
+  }
+  return id;
+}
+
 // Tab switching
 function switchTab(tab) {
   var chatPanel = document.getElementById("chatPanel");
@@ -7044,14 +7054,12 @@ var batchState = {
 };
 
 function saveBatchState() {
-  if (batchState.devices.length > 0) {
-    localStorage.setItem("batchState", JSON.stringify(batchState));
-    saveBatchStateToServer();
-    syncBatchToCloud();
-  } else {
+  localStorage.setItem("batchState", JSON.stringify(batchState));
+  saveBatchStateToServer();
+  syncBatchToCloud();
+  if (batchState.devices.length === 0) {
     localStorage.removeItem("batchState");
     deleteBatchStateOnServer();
-    syncBatchToCloud();
   }
 }
 
@@ -7102,12 +7110,20 @@ function loadBatchStateFromServer(callback) {
 
 function loadBatchState() {
   loadBatchFromCloud(function(cloudData) {
+    var tid = getTerminalId();
     if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
-      // Merge cloud data with in-memory state to preserve tested flags
-      var prevCurrentSN = batchState.currentSN;
-      batchState = mergeBatchStates(cloudData, batchState);
-      batchState.currentSN = prevCurrentSN;
-      // Write to localStorage directly (don't trigger another cloud sync)
+      // Filter cloud devices to only show this terminal's devices locally
+      // Devices without terminalId (legacy) are shown to everyone
+      var myDevices = cloudData.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
+      var myOrders = [];
+      var orderMap = {};
+      myDevices.forEach(function(d) {
+        var oid = d.order || "";
+        if (oid && !orderMap[oid]) { orderMap[oid] = { orderNumber: oid, devices: [] }; }
+        if (oid) orderMap[oid].devices.push(d);
+      });
+      for (var k in orderMap) { if (orderMap.hasOwnProperty(k)) myOrders.push(orderMap[k]); }
+      batchState = { devices: myDevices, orders: myOrders, currentSN: batchState.currentSN || null };
       localStorage.setItem("batchState", JSON.stringify(batchState));
       renderPendingList();
       return;
@@ -7116,8 +7132,11 @@ function loadBatchState() {
     try {
       var saved = JSON.parse(localStorage.getItem("batchState") || "null");
       if (saved && saved.devices && saved.devices.length > 0) {
+        // Ensure all local devices have terminalId
+        var needsSync = false;
+        saved.devices.forEach(function(d) { if (!d.terminalId) { d.terminalId = tid; needsSync = true; } });
         batchState = saved;
-        syncBatchToCloud(); // push local to cloud
+        if (needsSync) { localStorage.setItem("batchState", JSON.stringify(batchState)); syncBatchToCloud(); }
         renderPendingList();
       }
     } catch(e) {}
@@ -7332,7 +7351,8 @@ function parseBatchInput(text) {
             model: m || "未知型号",
             country: ct,
             order: fo,
-            tested: false
+            tested: false,
+            terminalId: getTerminalId()
           };
           devices.push(dev);
 
@@ -7391,7 +7411,8 @@ function parseBatchInput(text) {
         model: model || "未知型号",
         country: country,
         order: finalOrder,
-        tested: false
+        tested: false,
+        terminalId: getTerminalId()
       };
       devices.push(device);
 
@@ -7567,9 +7588,11 @@ function renderPendingList() {
   var btnDrawer = document.getElementById("btnPendingDrawer");
   var btnCount = document.getElementById("btnPendingCount");
 
-  var untested = batchState.devices.filter(function(d) { return !d.tested; }).length;
+  var tid = getTerminalId();
+  var myDevices = batchState.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
+  var untested = myDevices.filter(function(d) { return !d.tested; }).length;
 
-  if (batchState.devices.length === 0) {
+  if (myDevices.length === 0) {
     if (btnDrawer) btnDrawer.style.display = "none";
     var drawerEl = document.getElementById("batchDrawer");
     if (drawerEl) drawerEl.style.display = "none";
@@ -7584,7 +7607,7 @@ function renderPendingList() {
 
   var html = "";
   var lastOrder = "";
-  batchState.devices.forEach(function(d) {
+  myDevices.forEach(function(d) {
     if (d.order !== lastOrder) {
       if (lastOrder) html += '<div style="height:4px;"></div>';
       html += '<div style="font-size:13px;font-weight:700;color:#555;padding:4px 10px;background:#f8f8f8;border-radius:3px;margin-bottom:2px;">订单: ' + escapeHtml(d.order) + '</div>';
@@ -7639,8 +7662,10 @@ function deleteDevice(sn) {
 }
 
 function deleteAllDevices() {
-  if (!confirm("确定要删除列表中所有设备吗？已测试的记录将保留在本地存储中。")) return;
-  batchState.devices = [];
+  if (!confirm("确定要删除列表中所有设备吗？已测试的记录将保留。")) return;
+  var tid = getTerminalId();
+  // Keep only other terminals' devices
+  batchState.devices = batchState.devices.filter(function(d) { return d.terminalId && d.terminalId !== tid; });
   batchState.orders = [];
   batchState.currentSN = null;
   saveBatchState();
@@ -7769,12 +7794,23 @@ function syncBatchToCloud() {
   var sb = getSupabase();
   if (!sb || _syncPending) return;
   _syncPending = true;
-  // Read-modify-write to avoid overwriting concurrent changes
+  var tid = getTerminalId();
   sb.from("batch_state").select("data").eq("id", 1).maybeSingle().then(function(r) {
     var cloudData = (r.data && r.data.data) ? r.data.data : { devices: [], orders: [], currentSN: null };
-    var merged = mergeBatchStates(cloudData, batchState);
-    batchState = merged;
-    if (merged.devices.length > 0) {
+    // Remove this terminal's devices from cloud, then add local ones
+    var otherDevices = cloudData.devices.filter(function(d) { return d.terminalId !== tid; });
+    var mergedDevices = otherDevices.concat(batchState.devices);
+    // Rebuild orders from merged devices
+    var orderMap = {};
+    mergedDevices.forEach(function(d) {
+      var oid = d.order || "";
+      if (oid && !orderMap[oid]) orderMap[oid] = { orderNumber: oid, devices: [] };
+      if (oid) orderMap[oid].devices.push(d);
+    });
+    var mergedOrders = [];
+    for (var k in orderMap) { if (orderMap.hasOwnProperty(k)) mergedOrders.push(orderMap[k]); }
+    var merged = { devices: mergedDevices, orders: mergedOrders, currentSN: null };
+    if (mergedDevices.length > 0) {
       sb.from("batch_state").upsert({ id: 1, data: merged, updated_at: new Date().toISOString() }).then(function(r2) {
         _syncPending = false;
         if (r2.error) console.warn("[Supabase] batch_state upsert failed:", r2.error.message);
@@ -7909,29 +7945,37 @@ setInterval(function() {
   if (!testPanel || !testPanel.classList.contains("active")) return;
   loadBatchFromCloud(function(cloudData) {
     if (!cloudData || !cloudData.devices) return;
-    var merged = mergeBatchStates(cloudData, batchState);
+    var tid = getTerminalId();
+    // Only track this terminal's devices from cloud
+    var myCloudDevices = cloudData.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
+    // Build a map for quick lookup
+    var cloudMap = {};
+    myCloudDevices.forEach(function(d) { cloudMap[d.sn] = d; });
+    var localMap = {};
+    batchState.devices.forEach(function(d) { localMap[d.sn] = d; });
     var changed = false;
-    // Check for new devices from others
-    if (merged.devices.length !== batchState.devices.length) changed = true;
-    else {
-      for (var i = 0; i < merged.devices.length; i++) {
-        var md = merged.devices[i];
-        var found = false;
-        for (var j = 0; j < batchState.devices.length; j++) {
-          if (batchState.devices[j].sn === md.sn) {
-            if (batchState.devices[j].tested !== md.tested) changed = true;
-            found = true;
-            break;
-          }
-        }
-        if (!found) changed = true;
-        if (changed) break;
-      }
+    // Check for new/updated devices in cloud
+    myCloudDevices.forEach(function(d) {
+      if (!localMap[d.sn]) { changed = true; }
+      else if (localMap[d.sn].tested !== d.tested) { changed = true; }
+    });
+    // Check for removed devices
+    if (!changed) {
+      batchState.devices.forEach(function(d) {
+        if (!cloudMap[d.sn]) { changed = true; }
+      });
     }
     if (changed) {
+      var myOrders = [];
+      var om = {};
+      myCloudDevices.forEach(function(d) {
+        var oid = d.order || "";
+        if (oid && !om[oid]) { om[oid] = { orderNumber: oid, devices: [] }; }
+        if (oid) om[oid].devices.push(d);
+      });
+      for (var ok in om) { if (om.hasOwnProperty(ok)) myOrders.push(om[ok]); }
       var prevSN = batchState.currentSN;
-      batchState = merged;
-      batchState.currentSN = prevSN;
+      batchState = { devices: myCloudDevices, orders: myOrders, currentSN: prevSN };
       localStorage.setItem("batchState", JSON.stringify(batchState));
       renderPendingList();
     }
