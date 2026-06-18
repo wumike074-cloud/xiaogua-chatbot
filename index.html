@@ -6658,12 +6658,20 @@ var currentStep = 0;
 var stepData = {};
 
 // Terminal ID for per-user pending list isolation
+// Stored in both cookie and localStorage; cookie survives cache clears
 function getTerminalId() {
   var id = localStorage.getItem("_terminalId");
   if (!id) {
-    id = "T" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    localStorage.setItem("_terminalId", id);
+    // Try cookie (survives most "clear cache" operations)
+    var m = document.cookie.match(/(?:^|;\s*)_terminalId=([^;]*)/);
+    if (m) id = m[1];
   }
+  if (!id) {
+    id = "T" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  // Sync to both storages
+  localStorage.setItem("_terminalId", id);
+  document.cookie = "_terminalId=" + id + ";path=/;max-age=" + (365 * 24 * 3600) + ";SameSite=Lax";
   return id;
 }
 
