@@ -7078,7 +7078,22 @@ function loadBatchStateFromServer(callback) {
 function loadBatchState() {
   loadBatchFromCloud(function(cloudData) {
     if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
+      // Merge cloud data with in-memory state to preserve tested flags
+      var memMap = {};
+      for (var i = 0; i < batchState.devices.length; i++) {
+        memMap[batchState.devices[i].sn] = batchState.devices[i];
+      }
+      for (var i = 0; i < cloudData.devices.length; i++) {
+        var cd = cloudData.devices[i];
+        var md = memMap[cd.sn];
+        if (md) {
+          if (md.tested) cd.tested = true;
+          if (md.regCode && !cd.regCode) cd.regCode = md.regCode;
+        }
+      }
+      var prevCurrentSN = batchState.currentSN;
       batchState = cloudData;
+      batchState.currentSN = prevCurrentSN;
       saveBatchState(); // sync to localStorage
       renderPendingList();
       return;
