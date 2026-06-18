@@ -6744,6 +6744,11 @@ function renderStep() {
     var inputType = step.multi ? "checkbox" : "radio";
     // Always append "其他" option for firmware steps
     var hasOther = step.key === "firmware";
+    // If firmware from snDB doesn't match any option, auto-select "其他"
+    if (hasOther && sel && opts.indexOf(sel) === -1) {
+      stepData["firmware_other"] = sel;
+      sel = "其他";
+    }
     html += '<div class="step-options">';
     for (var j = 0; j < opts.length; j++) {
       var checked = step.multi ? (sel.indexOf(opts[j]) >= 0) : (sel === opts[j]);
@@ -6858,13 +6863,19 @@ function onSNInput() {
     var rec = snDB[sn];
     var order = rec[0] || "";
     var country = rec[2] || "";
-    if (order || country) {
+    var firmware = rec[5] || "";
+    var registered = rec[6] || "";
+    if (order || country || firmware) {
       // Store for later
       stepData["order"] = order;
       stepData["country"] = country;
+      if (firmware) stepData["firmware"] = firmware;
+      if (registered) stepData["registration"] = registered;
       var parts = [];
       if (order) parts.push("订单号: " + order);
       if (country) parts.push("国家: " + country);
+      if (firmware) parts.push("固件: " + firmware);
+      if (registered) parts.push("注册: " + registered);
       hintEl.innerHTML = parts.join(" &nbsp;|&nbsp; ");
       hintEl.style.color = "var(--success)";
     } else {
