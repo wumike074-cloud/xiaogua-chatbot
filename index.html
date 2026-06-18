@@ -7113,6 +7113,7 @@ function loadBatchStateFromServer(callback) {
 
 function loadBatchState() {
   var tid = getTerminalId();
+  var prevCurrentSN = batchState.currentSN; // preserve in-progress test
   // LocalStorage is the source of truth — check it first
   try {
     var saved = JSON.parse(localStorage.getItem("batchState") || "null");
@@ -7121,6 +7122,7 @@ function loadBatchState() {
       var needsSync = false;
       saved.devices.forEach(function(d) { if (!d.terminalId) { d.terminalId = tid; needsSync = true; } });
       batchState = saved;
+      if (prevCurrentSN) batchState.currentSN = prevCurrentSN; // restore in-progress test
       if (needsSync) { localStorage.setItem("batchState", JSON.stringify(batchState)); syncBatchToCloud(); }
       renderPendingList();
       // If local list is intentionally empty (user deleted all), skip cloud sync
