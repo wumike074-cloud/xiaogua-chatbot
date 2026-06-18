@@ -6658,18 +6658,17 @@ var currentStep = 0;
 var stepData = {};
 
 // Terminal ID for per-user pending list isolation
-// Stored in both cookie and localStorage; cookie survives cache clears
+// Stored in cookie (rolling 1-year expiry) and localStorage
 function getTerminalId() {
   var id = localStorage.getItem("_terminalId");
   if (!id) {
-    // Try cookie (survives most "clear cache" operations)
     var m = document.cookie.match(/(?:^|;\s*)_terminalId=([^;]*)/);
     if (m) id = m[1];
   }
   if (!id) {
     id = "T" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
-  // Sync to both storages
+  // Sync to both storages — cookie gets rolling 1-year refresh on every visit
   localStorage.setItem("_terminalId", id);
   document.cookie = "_terminalId=" + id + ";path=/;max-age=" + (365 * 24 * 3600) + ";SameSite=Lax";
   return id;
@@ -7156,22 +7155,28 @@ function loadBatchState() {
     }
   } catch(e) {}
   // No localStorage — try cloud (first visit or cache cleared)
+  // In recovery mode, show ALL cloud devices since terminalId may be lost
   loadBatchFromCloud(function(cloudData) {
     if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
-      var myDevices = cloudData.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
-      if (myDevices.length > 0) {
-        var myOrders = [];
-        var orderMap = {};
-        myDevices.forEach(function(d) {
-          var oid = d.order || "";
-          if (oid && !orderMap[oid]) { orderMap[oid] = { orderNumber: oid, devices: [] }; }
-          if (oid) orderMap[oid].devices.push(d);
-        });
-        for (var k in orderMap) { if (orderMap.hasOwnProperty(k)) myOrders.push(orderMap[k]); }
-        batchState = { devices: myDevices, orders: myOrders, currentSN: null };
-        localStorage.setItem("batchState", JSON.stringify(batchState));
-        renderPendingList();
-      }
+      // Recover all devices — tag legacy ones with current terminalId so user owns them
+      var recovered = [];
+      cloudData.devices.forEach(function(d) {
+        if (!d.terminalId) d.terminalId = tid;
+        recovered.push(d);
+      });
+      var myOrders = [];
+      var orderMap = {};
+      recovered.forEach(function(d) {
+        var oid = d.order || "";
+        if (oid && !orderMap[oid]) { orderMap[oid] = { orderNumber: oid, devices: [] }; }
+        if (oid) orderMap[oid].devices.push(d);
+      });
+      for (var k in orderMap) { if (orderMap.hasOwnProperty(k)) myOrders.push(orderMap[k]); }
+      batchState = { devices: recovered, orders: myOrders, currentSN: null };
+      localStorage.setItem("batchState", JSON.stringify(batchState));
+      renderPendingList();
+      // Re-tag recovered devices in cloud with current terminalId
+      syncBatchToCloud();
     }
   });
 }
