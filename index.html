@@ -4703,6 +4703,9 @@ function init() {
   autoResizeTextarea();
   document.addEventListener("DOMContentLoaded", function() {
     loadBatchState();
+    syncRecordsFromCloud();
+    // First-time migration: push local data to cloud if cloud is empty
+    setTimeout(function() { migrateLocalToCloud(); }, 2000);
   });
 }
 
@@ -6626,8 +6629,9 @@ function switchTab(tab) {
     testPanel.classList.add("active");
     app.style.maxWidth = "1200px";
     toggleFixedActions(true);
+    loadBatchState();
+    syncRecordsFromCloud();
     renderProductList();
-    renderRecordsTable();
   }
 }
 
@@ -6981,9 +6985,11 @@ function saveBatchState() {
   if (batchState.devices.length > 0) {
     localStorage.setItem("batchState", JSON.stringify(batchState));
     saveBatchStateToServer();
+    syncBatchToCloud();
   } else {
     localStorage.removeItem("batchState");
     deleteBatchStateOnServer();
+    syncBatchToCloud();
   }
 }
 
@@ -7033,13 +7039,23 @@ function loadBatchStateFromServer(callback) {
 }
 
 function loadBatchState() {
-  try {
-    var saved = JSON.parse(localStorage.getItem("batchState") || "null");
-    if (saved && saved.devices && saved.devices.length > 0) {
-      batchState = saved;
+  loadBatchFromCloud(function(cloudData) {
+    if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
+      batchState = cloudData;
+      saveBatchState(); // sync to localStorage
       renderPendingList();
+      return;
     }
-  } catch(e) {}
+    // Fallback to localStorage
+    try {
+      var saved = JSON.parse(localStorage.getItem("batchState") || "null");
+      if (saved && saved.devices && saved.devices.length > 0) {
+        batchState = saved;
+        syncBatchToCloud(); // push local to cloud
+        renderPendingList();
+      }
+    } catch(e) {}
+  });
 }
 
 function openBatchDialog() {
@@ -7667,6 +7683,102 @@ var autoSaveServer = null;        // "server" = localhost:8765, "fsa" = File Sys
 var autoFileHandle = null;
 var autoFileDB = null;
 var AUTO_SAVE_URL = "http://" + window.location.hostname + ":8765";
+
+// ==================== SUPABASE CLOUD SYNC ====================
+var SUPABASE_URL = "https://wqtkyuarvddpyehpjzqe.supabase.co";
+var SUPABASE_KEY = "sb_publishable_xbZNH82SqHbLqbbF34mSTQ_NLoAFO-j";
+var _supabase;
+
+function getSupabase() {
+  if (!_supabase && typeof supabase !== "undefined") {
+    _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return _supabase;
+}
+
+function syncBatchToCloud() {
+  var sb = getSupabase();
+  if (!sb) return;
+  if (batchState.devices.length > 0) {
+    sb.from("batch_state").upsert({ id: 1, data: batchState, updated_at: new Date().toISOString() }).then(function(r) {
+      if (r.error) console.warn("[Supabase] batch_state upsert failed:", r.error.message);
+    });
+  } else {
+    sb.from("batch_state").delete().eq("id", 1).then(function(r) {
+      if (r.error) console.warn("[Supabase] batch_state delete failed:", r.error.message);
+    });
+  }
+}
+
+function loadBatchFromCloud(callback) {
+  var sb = getSupabase();
+  if (!sb) { if (callback) callback(null); return; }
+  sb.from("batch_state").select("data").eq("id", 1).maybeSingle().then(function(r) {
+    if (r.error || !r.data) { if (callback) callback(null); return; }
+    if (callback) callback(r.data.data);
+  });
+}
+
+function syncRecordToCloud(record) {
+  var sb = getSupabase();
+  if (!sb) return;
+  sb.from("test_records").insert({
+    time: record.date || "", country: record.country || "", order_no: record.order || "",
+    tester: record.tester || "", model: record.model || "", sn: record.sn || "",
+    firmware: record.firmware || "", registered: record.registration || "",
+    other_info: record.importantInfo || "", imei: record.remark1 || "", remark2: record.remark2 || ""
+  }).then(function(r) {
+    if (r.error) console.warn("[Supabase] record insert failed:", r.error.message);
+  });
+}
+
+function deleteRecordFromCloud(sn, time) {
+  var sb = getSupabase();
+  if (!sb) return;
+  sb.from("test_records").delete().eq("sn", sn).eq("time", time).then(function(r) {
+    if (r.error) console.warn("[Supabase] record delete failed:", r.error.message);
+  });
+}
+
+function loadRecordsFromCloud(callback) {
+  var sb = getSupabase();
+  if (!sb) { if (callback) callback([]); return; }
+  sb.from("test_records").select("*").order("id", { ascending: false }).then(function(r) {
+    if (r.error) { if (callback) callback([]); return; }
+    var records = (r.data || []).map(function(row) {
+      return { date: row.time, country: row.country, order: row.order_no, tester: row.tester,
+        model: row.model, sn: row.sn, firmware: row.firmware, registration: row.registered,
+        importantInfo: row.other_info, remark1: row.imei, remark2: row.remark2, _cloudId: row.id };
+    });
+    if (callback) callback(records);
+  });
+}
+
+function migrateLocalToCloud() {
+  var sb = getSupabase();
+  if (!sb) return;
+  // Migrate batchState
+  loadBatchFromCloud(function(cloudData) {
+    if (!cloudData || !cloudData.devices || cloudData.devices.length === 0) {
+      var localState = null;
+      try { localState = JSON.parse(localStorage.getItem("batchState") || "null"); } catch(e) {}
+      if (localState && localState.devices && localState.devices.length > 0) {
+        batchState = localState;
+        syncBatchToCloud();
+      }
+    }
+  });
+  // Migrate test records
+  sb.from("test_records").select("id", { count: "exact", head: true }).then(function(r) {
+    if (r.count === 0) {
+      var localRecords = [];
+      try { localRecords = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
+      if (localRecords.length > 0) {
+        localRecords.forEach(function(rec) { syncRecordToCloud(rec); });
+      }
+    }
+  });
+}
 var autoSaveEnabled = false;      // user has consented
 
 // -- Show consent banner when server is detected --
@@ -8051,6 +8163,7 @@ function finishTest() {
   records.unshift(record);
   localStorage.setItem("deviceTestRecords", JSON.stringify(records));
   persistToFile();
+  syncRecordToCloud(record);
 
   // Mark batch device as done
   if (batchState.currentSN) {
@@ -8072,6 +8185,24 @@ function finishTest() {
 }
 
 // Render records table
+function syncRecordsFromCloud() {
+  loadRecordsFromCloud(function(cloudRecords) {
+    if (cloudRecords && cloudRecords.length > 0) {
+      var existing = [];
+      try { existing = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
+      var seen = {};
+      var merged = [];
+      cloudRecords.concat(existing).forEach(function(r) {
+        var k = r.date + "|" + r.model + "|" + r.sn;
+        if (!seen[k]) { seen[k] = true; merged.push(r); }
+      });
+      merged.sort(function(a, b) { return (b.date || "").localeCompare(a.date || ""); });
+      localStorage.setItem("deviceTestRecords", JSON.stringify(merged));
+    }
+    renderRecordsTable();
+  });
+}
+
 function renderRecordsTable() {
   var tbody = document.getElementById("recordsBody");
   var countEl = document.getElementById("recordCount");
@@ -8148,9 +8279,11 @@ function deleteRecord(idx) {
   var records = [];
   try { records = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
   if (idx < 0 || idx >= records.length) return;
+  var removed = records[idx];
   records.splice(idx, 1);
   localStorage.setItem("deviceTestRecords", JSON.stringify(records));
   persistToFile();
+  if (removed) deleteRecordFromCloud(removed.sn, removed.date);
   renderRecordsTable();
 }
 
@@ -8358,6 +8491,7 @@ function exportRecords() {
 })();
 
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
