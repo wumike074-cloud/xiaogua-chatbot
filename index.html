@@ -6799,7 +6799,9 @@ function renderStep() {
     html += '</div>';
     if (step.customOption) {
       var customVal = stepData[step.key + "_custom"] || "";
-      var customStyle = sel === "自定义" ? "" : "display:none";
+      // Show custom input when selected value is the last option (could be "自定义", "其他", etc.)
+      var lastOpt = opts.length > 0 ? opts[opts.length - 1] : "自定义";
+      var customStyle = sel === lastOpt ? "" : "display:none";
       html += '<div id="customOptionInput" style="margin-top:10px;' + customStyle + '"><input type="text" id="customOptionValue" placeholder="' + escapeHtml(step.customPlaceholder || '') + '" value="' + escapeHtml(customVal) + '" style="max-width:300px;"></div>';
     }
     if (hasOther) {
@@ -6859,11 +6861,12 @@ function renderStep() {
   // Custom option / firmware "其他" toggle for select steps
   var radios = document.querySelectorAll('input[name="stepOpt"]');
   if (step.type === "select" && step.customOption) {
+    var lastOpt = step.options[step.options.length - 1];
     radios.forEach(function(r) {
       r.addEventListener("change", function() {
         var customDiv = document.getElementById("customOptionInput");
         if (customDiv) {
-          customDiv.style.display = this.value === "自定义" ? "" : "none";
+          customDiv.style.display = this.value === lastOpt ? "" : "none";
         }
       });
     });
@@ -6969,7 +6972,7 @@ function nextStep() {
     } else {
       stepData[key] = checked.length > 0 ? checked[0].value : "";
     }
-    if (step.customOption && stepData[key] === "自定义") {
+    if (step.customOption && stepData[key] === step.options[step.options.length - 1]) {
       var customInput = document.getElementById("customOptionValue");
       if (customInput) stepData[key + "_custom"] = customInput.value;
     }
@@ -7014,7 +7017,7 @@ function saveCurrentStepData() {
     } else {
       stepData[key] = checked.length > 0 ? checked[0].value : "";
     }
-    if (step.customOption && stepData[key] === "自定义") {
+    if (step.customOption && stepData[key] === step.options[step.options.length - 1]) {
       var customInput = document.getElementById("customOptionValue");
       if (customInput) stepData[key + "_custom"] = customInput.value;
     }
@@ -8299,7 +8302,15 @@ function finishTest() {
     model: currentProduct,
     sn: stepData["sn"] || "",
     firmware: buildFirmwareStr(stepData),
-    registration: stepData["registration"] === "自定义" ? (stepData["registration_custom"] || "自定义") : (stepData["registration"] || ""),
+    registration: (function() {
+      var regVal = stepData["registration"] || "";
+      var regStep = null;
+      for (var si = 0; si < steps.length; si++) { if (steps[si].key === "registration") { regStep = steps[si]; break; } }
+      if (regStep && regStep.options && regVal === regStep.options[regStep.options.length - 1]) {
+        return stepData["registration_custom"] || regVal;
+      }
+      return regVal;
+    })(),
     regCode: stepData["regCode"] || "",
     testContent: stepData["testContent"] || stepTitles,
     importantInfo: stepData["importantInfo"] || stepData["imuReg"] || stepData["padSN"] || "",
