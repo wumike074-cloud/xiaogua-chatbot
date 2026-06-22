@@ -7178,14 +7178,15 @@ function loadBatchState() {
     }
   } catch(e) {}
   // No localStorage — try cloud (first visit or cache cleared)
-  // Only recover legacy devices (no terminalId) and own devices — skip other terminals
-  // Do NOT sync back to cloud to avoid affecting other users
+  // Only recover devices matching our EXACT terminalId — if terminalId is freshly
+  // generated (cookie also cleared), nothing comes back. This prevents the "clear
+  // browsing data then see old records" problem.
   loadBatchFromCloud(function(cloudData) {
     if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
       var recovered = [];
       cloudData.devices.forEach(function(d) {
-        if (d.terminalId && d.terminalId !== tid) return; // skip other terminals' devices
-        d = Object.assign({}, d); // shallow copy to avoid mutating cloud reference
+        if (d.terminalId !== tid) return; // strict match — skip "none" and other terminals
+        d = Object.assign({}, d);
         d.terminalId = tid;
         recovered.push(d);
       });
