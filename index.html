@@ -7178,14 +7178,15 @@ function loadBatchState() {
     }
   } catch(e) {}
   // No localStorage — try cloud (first visit or cache cleared)
-  // Only recover devices matching our EXACT terminalId — if terminalId is freshly
-  // generated (cookie also cleared), nothing comes back. This prevents the "clear
-  // browsing data then see old records" problem.
+  // Only recover devices updated within the last 1 minute, matching our terminalId.
+  // Older data is considered stale and not restored.
   loadBatchFromCloud(function(cloudData) {
     if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
       var recovered = [];
+      var cutoff = Date.now() - 60000; // 1-minute window
       cloudData.devices.forEach(function(d) {
-        if (d.terminalId !== tid) return; // strict match — skip "none" and other terminals
+        if (d.terminalId !== tid) return;
+        if (!d.lastModified || d.lastModified < cutoff) return; // outside 1-min window
         d = Object.assign({}, d);
         d.terminalId = tid;
         recovered.push(d);
@@ -7870,11 +7871,14 @@ function syncBatchToCloud() {
     var otherSNs = {};
     otherDevices.forEach(function(d) { otherSNs[d.sn] = true; });
     // Only sync devices that belong to this terminal, dedupe against cloud
+    var now = Date.now();
     var myDevices = batchState.devices.filter(function(d) {
       if (d.terminalId && d.terminalId !== tid) return false;
       if (otherSNs[d.sn]) return false; // already in cloud under another terminal
       return true;
     });
+    // Stamp lastModified so recovery can apply 1-minute time window
+    myDevices.forEach(function(d) { d.lastModified = now; });
     var mergedDevices = otherDevices.concat(myDevices);
     // Rebuild orders from merged devices
     var orderMap = {};
