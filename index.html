@@ -4705,10 +4705,8 @@ let currentLang = "zh";
 function init() {
   autoResizeTextarea();
   document.addEventListener("DOMContentLoaded", function() {
-    loadBatchState();
-    syncRecordsFromCloud();
-    // First-time migration: push local data to cloud if cloud is empty
-    setTimeout(function() { migrateLocalToCloud(); }, 2000);
+    refreshPendingList();
+    refreshRecordsTable();
   });
 }
 
@@ -6672,21 +6670,6 @@ var stepData = {};
 
 // Terminal ID for per-user pending list isolation
 // Stored in cookie (rolling 1-year expiry) and localStorage
-function getTerminalId() {
-  var id = localStorage.getItem("_terminalId");
-  if (!id) {
-    var m = document.cookie.match(/(?:^|;\s*)_terminalId=([^;]*)/);
-    if (m) id = m[1];
-  }
-  if (!id) {
-    id = "T" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  }
-  // Sync to both storages — cookie gets rolling 1-year refresh on every visit
-  localStorage.setItem("_terminalId", id);
-  document.cookie = "_terminalId=" + id + ";path=/;max-age=" + (365 * 24 * 3600) + ";SameSite=Lax";
-  return id;
-}
-
 // Tab switching
 function switchTab(tab) {
   var chatPanel = document.getElementById("chatPanel");
@@ -6707,8 +6690,8 @@ function switchTab(tab) {
     testPanel.classList.add("active");
     app.style.maxWidth = "1200px";
     toggleFixedActions(true);
-    loadBatchState();
-    syncRecordsFromCloud();
+    refreshPendingList();
+    refreshRecordsTable();
     renderProductList();
   }
 }
@@ -7067,152 +7050,8 @@ function goToStep(idx) {
 }
 
 // ==================== BATCH TEST IMPORT ====================
-var batchState = {
-  orders: [],        // [{ orderNumber, devices[] }]
-  devices: [],       // flat list for iteration
-  currentSN: null
-};
+var batchState = { currentSN: null };
 
-function saveBatchState() {
-  localStorage.setItem("batchState", JSON.stringify(batchState));
-  saveBatchStateToServer();
-  syncBatchToCloud();
-}
-
-function saveBatchStateToServer() {
-  if (autoSaveServer !== "server") return;
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", AUTO_SAVE_URL + "/batch-state", true);
-  xhr.timeout = 3000;
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.send(JSON.stringify(batchState));
-}
-
-function deleteBatchStateOnServer() {
-  if (autoSaveServer !== "server") return;
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", AUTO_SAVE_URL + "/batch-state", true);
-  xhr.timeout = 3000;
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.send("null");
-}
-
-function loadBatchStateFromServer(callback) {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", AUTO_SAVE_URL + "/batch-state", true);
-  xhr.timeout = 3000;
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      try {
-        var data = JSON.parse(xhr.responseText);
-        if (data && data.devices && data.devices.length > 0) {
-          // Merge with localStorage: server wins for persistence, but preserve local if server empty
-          var localState = null;
-          try { localState = JSON.parse(localStorage.getItem("batchState") || "null"); } catch(e) {}
-          batchState = data;
-          saveBatchState(); // sync to localStorage
-          renderPendingList();
-          if (callback) callback(true);
-          return;
-        }
-      } catch(e) {}
-    }
-    if (callback) callback(false);
-  };
-  xhr.onerror = function() { if (callback) callback(false); };
-  xhr.ontimeout = function() { if (callback) callback(false); };
-  xhr.send();
-}
-
-function loadBatchState() {
-  var tid = getTerminalId();
-  var prevCurrentSN = batchState.currentSN; // preserve in-progress test
-  // LocalStorage is the source of truth — check it first
-  try {
-    var saved = JSON.parse(localStorage.getItem("batchState") || "null");
-    if (saved && typeof saved.devices !== "undefined") {
-      // Ensure all local devices have terminalId
-      var needsSync = false;
-      saved.devices.forEach(function(d) { if (!d.terminalId) { d.terminalId = tid; needsSync = true; } });
-      batchState = saved;
-      if (prevCurrentSN) batchState.currentSN = prevCurrentSN; // restore in-progress test
-      if (needsSync) { localStorage.setItem("batchState", JSON.stringify(batchState)); syncBatchToCloud(); }
-      renderPendingList();
-      // If local list is intentionally empty (user deleted all), skip cloud sync
-      if (batchState.devices.length === 0 && saved && typeof saved.devices !== "undefined") return;
-      // Still check cloud in background for multi-tab sync (only when local has devices)
-      loadBatchFromCloud(function(cloudData) {
-        if (!cloudData || !cloudData.devices) return;
-        // Use same filter as renderPendingList (includes legacy devices without terminalId)
-        var myCloudDevices = cloudData.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
-        var localMap = {};
-        batchState.devices.forEach(function(d) { localMap[d.sn] = d; });
-        // Only update from cloud if local has devices to compare (don't resurrect deleted list)
-        if (batchState.devices.length === 0) return;
-        // Build cloud device presence map (before changed detection, used by both paths)
-        var cloudMap = {};
-        myCloudDevices.forEach(function(d) { cloudMap[d.sn] = true; });
-        var changed = false;
-        // Only upgrade tested flag: local untested → cloud tested
-        myCloudDevices.forEach(function(d) {
-          if (localMap[d.sn] && !localMap[d.sn].tested && d.tested) changed = true;
-        });
-        // Check for removed devices (local has device but cloud no longer does)
-        if (!changed) {
-          batchState.devices.forEach(function(d) { if (!cloudMap[d.sn]) changed = true; });
-        }
-        if (changed) {
-          // Merge: keep local devices, update tested flags from cloud (only upgrade, never downgrade)
-          var cloudTestedMap = {};
-          myCloudDevices.forEach(function(d) { if (d.tested) cloudTestedMap[d.sn] = true; });
-          batchState.devices.forEach(function(d) {
-            if (cloudTestedMap[d.sn]) d.tested = true;
-          });
-          // Remove local devices that no longer exist in cloud (deleted by another tab)
-          batchState.devices = batchState.devices.filter(function(d) { return cloudMap[d.sn]; });
-          localStorage.setItem("batchState", JSON.stringify(batchState));
-          renderPendingList();
-        }
-      });
-      return;
-    }
-  } catch(e) {}
-  // No localStorage — try cloud (first visit or cache cleared)
-  // Only recover devices updated within the last 1 minute, matching our terminalId.
-  // Older data is considered stale and not restored.
-  loadBatchFromCloud(function(cloudData) {
-    if (cloudData && cloudData.devices && cloudData.devices.length > 0) {
-      var recovered = [];
-      var cutoff = Date.now() - 60000; // 1-minute window
-      cloudData.devices.forEach(function(d) {
-        if (d.terminalId !== tid) return;
-        if (!d.lastModified || d.lastModified < cutoff) return; // outside 1-min window
-        d = Object.assign({}, d);
-        d.terminalId = tid;
-        recovered.push(d);
-      });
-      var myOrders = [];
-      var orderMap = {};
-      recovered.forEach(function(d) {
-        var oid = d.order || "";
-        if (oid && !orderMap[oid]) { orderMap[oid] = { orderNumber: oid, devices: [] }; }
-        if (oid) orderMap[oid].devices.push(d);
-      });
-      for (var k in orderMap) { if (orderMap.hasOwnProperty(k)) myOrders.push(orderMap[k]); }
-      batchState = { devices: recovered, orders: myOrders, currentSN: null };
-      localStorage.setItem("batchState", JSON.stringify(batchState));
-      renderPendingList();
-      // Do NOT syncBatchToCloud here — avoid overwriting other terminals' devices
-    }
-  });
-}
-
-function resetLocalAndReload() {
-  localStorage.removeItem("batchState");
-  localStorage.removeItem("_terminalId");
-  document.cookie = "_terminalId=;path=/;max-age=0";
-  location.reload();
-}
 
 function openBatchDialog() {
   var overlay = document.getElementById("batchOverlay");
@@ -7259,64 +7098,27 @@ function addDevicesFromDialog() {
     return;
   }
 
-  // Build existing SN set
   var existingSNs = {};
-  if (batchState.devices) {
-    for (var i = 0; i < batchState.devices.length; i++) {
-      existingSNs[batchState.devices[i].sn] = true;
-    }
-  }
+  _pendingCache.forEach(function(d) { existingSNs[d.sn] = true; });
+  var newDevices = parsed.devices.filter(function(d) { return !existingSNs[d.sn]; });
 
-  // Only keep new SNs
-  var addedDevices = [];
-  for (var i = 0; i < parsed.devices.length; i++) {
-    if (!existingSNs[parsed.devices[i].sn]) {
-      addedDevices.push(parsed.devices[i]);
-      existingSNs[parsed.devices[i].sn] = true;
-    }
-  }
-
-  if (addedDevices.length === 0) {
+  if (newDevices.length === 0) {
     if (resultEl) { resultEl.textContent = "所有设备已在列表中，无需添加"; resultEl.className = "batch-parse-result warn"; }
     return;
   }
 
-  // Append new devices
-  if (!batchState.devices) batchState.devices = [];
-  if (!batchState.orders) batchState.orders = [];
-  for (var i = 0; i < addedDevices.length; i++) {
-    batchState.devices.push(addedDevices[i]);
-  }
+  if (resultEl) { resultEl.textContent = "正在添加..."; resultEl.className = "batch-parse-result"; }
 
-  // Merge orders from parsed data
-  for (var i = 0; i < parsed.orders.length; i++) {
-    var found = false;
-    for (var j = 0; j < batchState.orders.length; j++) {
-      if (batchState.orders[j].orderNumber === parsed.orders[i].orderNumber) { found = true; break; }
+  batchImportDevices(newDevices).then(function() {
+    if (resultEl) {
+      resultEl.textContent = "新增 " + newDevices.length + " 台设备";
+      resultEl.className = "batch-parse-result ok";
     }
-    if (!found) batchState.orders.push(parsed.orders[i]);
-    for (var j = 0; j < batchState.orders.length; j++) {
-      if (batchState.orders[j].orderNumber === parsed.orders[i].orderNumber) {
-        for (var k = 0; k < addedDevices.length; k++) {
-          if (addedDevices[k].order === parsed.orders[i].orderNumber) {
-            var dup = false;
-            for (var m = 0; m < batchState.orders[j].devices.length; m++) {
-              if (batchState.orders[j].devices[m].sn === addedDevices[k].sn) { dup = true; break; }
-            }
-            if (!dup) batchState.orders[j].devices.push(addedDevices[k]);
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  var msg = "新增 " + addedDevices.length + " 台设备（共 " + batchState.devices.length + " 台）";
-  if (resultEl) { resultEl.textContent = msg; resultEl.className = "batch-parse-result ok"; }
-
-  saveBatchState();
-  renderPendingList();
-  setTimeout(function() { closeAddDeviceDialog(); }, 800);
+    refreshPendingList();
+    setTimeout(function() { closeAddDeviceDialog(); }, 500);
+  }).catch(function(err) {
+    if (resultEl) { resultEl.textContent = "保存失败: " + err.message; resultEl.className = "batch-parse-result warn"; }
+  });
 }
 
 function detectModelFromSN(sn) {
@@ -7423,7 +7225,6 @@ function parseBatchInput(text) {
             country: ct,
             order: fo,
             tested: false,
-            terminalId: getTerminalId()
           };
           devices.push(dev);
 
@@ -7482,8 +7283,7 @@ function parseBatchInput(text) {
         model: model || "未知型号",
         country: country,
         order: finalOrder,
-        tested: false,
-        terminalId: getTerminalId()
+        tested: false
       };
       devices.push(device);
 
@@ -7515,55 +7315,36 @@ function parseAndRender() {
   }
 
   var parsed = parseBatchInput(rawText);
-
   if (parsed.devices.length === 0) {
-    if (resultEl) {
-      resultEl.textContent = "未识别到设备数据，请检查格式";
-      resultEl.className = "batch-parse-result warn";
-    }
+    if (resultEl) { resultEl.textContent = "未识别到设备数据，请检查格式"; resultEl.className = "batch-parse-result warn"; }
     return;
   }
 
-  // Preserve tested status for existing devices, add new ones
-  var oldTested = {};
-  var oldReg = {};
-  if (batchState.devices) {
-    for (var di = 0; di < batchState.devices.length; di++) {
-      var d2 = batchState.devices[di];
-      oldTested[d2.sn] = d2.tested;
-      if (d2.regCode) oldReg[d2.sn] = d2.regCode;
-    }
-  }
-  var addedCount = 0;
-  for (var di = 0; di < parsed.devices.length; di++) {
-    var d3 = parsed.devices[di];
-    if (oldTested.hasOwnProperty(d3.sn)) {
-      d3.tested = oldTested[d3.sn];
-      if (!d3.regCode && oldReg[d3.sn]) d3.regCode = oldReg[d3.sn];
-    } else {
-      addedCount++;
-    }
-  }
+  if (resultEl) { resultEl.textContent = "正在保存..."; resultEl.className = "batch-parse-result"; }
 
-  batchState.orders = parsed.orders;
-  batchState.devices = parsed.devices;
+  // Preserve tested status for existing devices
+  var existingMap = {};
+  _pendingCache.forEach(function(d) { existingMap[d.sn] = d; });
+  parsed.devices.forEach(function(d) {
+    if (existingMap[d.sn]) {
+      if (existingMap[d.sn].tested) d.tested = true;
+      if (existingMap[d.sn].regCode && !d.regCode) d.regCode = existingMap[d.sn].regCode;
+    }
+  });
+
   batchState.currentSN = null;
-
-  var msg = "识别 " + parsed.orders.length + " 个订单，" + parsed.devices.length + " 台设备";
-  if (addedCount > 0) msg += "（新增 " + addedCount + " 台）";
-  if (parsed.warnings.length > 0) msg += "（" + parsed.warnings.join("; ") + "）";
-  if (resultEl) {
-    resultEl.textContent = msg;
-    resultEl.className = "batch-parse-result ok";
-  }
-
-  saveBatchState();
-  renderPendingList();
-
-  // Show floating badge and close dialog
-  setTimeout(function() { closeBatchDialog(); }, 500);
+  batchImportDevices(parsed.devices).then(function() {
+    var msg = "";
+    if (parsed.orders.length > 0) msg += "识别到 " + parsed.orders.length + " 个订单，";
+    msg += "共 " + parsed.devices.length + " 台设备。已导入完成！";
+    if (parsed.warnings && parsed.warnings.length > 0) msg += " 警告: " + parsed.warnings.join("; ");
+    if (resultEl) { resultEl.textContent = msg; resultEl.className = "batch-parse-result ok"; }
+    refreshPendingList();
+    setTimeout(function() { closeBatchDialog(); }, 800);
+  }).catch(function(err) {
+    if (resultEl) { resultEl.textContent = "保存失败: " + err.message; resultEl.className = "batch-parse-result warn"; }
+  });
 }
-
 function addDevices() {
   var textarea = document.getElementById("batchTextarea");
   var resultEl = document.getElementById("batchParseResult");
@@ -7581,67 +7362,29 @@ function addDevices() {
     return;
   }
 
-  // Build existing SN set
+  // Check against existing devices
   var existingSNs = {};
-  if (batchState.devices) {
-    for (var i = 0; i < batchState.devices.length; i++) {
-      existingSNs[batchState.devices[i].sn] = true;
-    }
-  }
+  _pendingCache.forEach(function(d) { existingSNs[d.sn] = true; });
+  var newDevices = parsed.devices.filter(function(d) { return !existingSNs[d.sn]; });
 
-  // Only add new SNs not already in the list
-  var addedDevices = [];
-  for (var i = 0; i < parsed.devices.length; i++) {
-    if (!existingSNs[parsed.devices[i].sn]) {
-      addedDevices.push(parsed.devices[i]);
-      existingSNs[parsed.devices[i].sn] = true;
-    }
-  }
-
-  if (addedDevices.length === 0) {
+  if (newDevices.length === 0) {
     if (resultEl) { resultEl.textContent = "所有设备已在列表中，无需添加"; resultEl.className = "batch-parse-result warn"; }
     return;
   }
 
-  // Append new devices
-  if (!batchState.devices) batchState.devices = [];
-  if (!batchState.orders) batchState.orders = [];
-  for (var i = 0; i < addedDevices.length; i++) {
-    batchState.devices.push(addedDevices[i]);
-  }
+  if (resultEl) { resultEl.textContent = "正在添加..."; resultEl.className = "batch-parse-result"; }
 
-  // Merge new orders
-  for (var i = 0; i < parsed.orders.length; i++) {
-    var found = false;
-    for (var j = 0; j < batchState.orders.length; j++) {
-      if (batchState.orders[j].orderNumber === parsed.orders[i].orderNumber) { found = true; break; }
+  batchImportDevices(newDevices).then(function() {
+    if (resultEl) {
+      resultEl.textContent = "新增 " + newDevices.length + " 台设备";
+      resultEl.className = "batch-parse-result ok";
     }
-    if (!found) batchState.orders.push(parsed.orders[i]);
-    // Also add devices to the order group
-    for (var j = 0; j < batchState.orders.length; j++) {
-      if (batchState.orders[j].orderNumber === parsed.orders[i].orderNumber) {
-        for (var k = 0; k < addedDevices.length; k++) {
-          if (addedDevices[k].order === parsed.orders[i].orderNumber) {
-            var alreadyInGroup = false;
-            for (var m = 0; m < batchState.orders[j].devices.length; m++) {
-              if (batchState.orders[j].devices[m].sn === addedDevices[k].sn) { alreadyInGroup = true; break; }
-            }
-            if (!alreadyInGroup) batchState.orders[j].devices.push(addedDevices[k]);
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  var msg = "新增 " + addedDevices.length + " 台设备（共 " + batchState.devices.length + " 台）";
-  if (resultEl) { resultEl.textContent = msg; resultEl.className = "batch-parse-result ok"; }
-
-  saveBatchState();
-  renderPendingList();
-  setTimeout(function() { closeBatchDialog(); }, 800);
+    refreshPendingList();
+    setTimeout(function() { closeAddDeviceDialog(); }, 500);
+  }).catch(function(err) {
+    if (resultEl) { resultEl.textContent = "保存失败: " + err.message; resultEl.className = "batch-parse-result warn"; }
+  });
 }
-
 function togglePendingDrawer() {
   var drawer = document.getElementById("batchDrawer");
   if (!drawer) return;
@@ -7659,8 +7402,7 @@ function renderPendingList() {
   var btnDrawer = document.getElementById("btnPendingDrawer");
   var btnCount = document.getElementById("btnPendingCount");
 
-  var tid = getTerminalId();
-  var myDevices = batchState.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
+  var myDevices = _pendingCache;
   var untested = myDevices.filter(function(d) { return !d.tested; }).length;
 
   if (myDevices.length === 0) {
@@ -7708,100 +7450,96 @@ function renderPendingList() {
 }
 
 function deleteDevice(sn) {
-  // Remove from devices
-  for (var i = 0; i < batchState.devices.length; i++) {
-    if (batchState.devices[i].sn === sn) {
-      batchState.devices.splice(i, 1);
-      break;
-    }
-  }
-  // Remove from order groups
-  for (var i = 0; i < batchState.orders.length; i++) {
-    for (var j = 0; j < batchState.orders[i].devices.length; j++) {
-      if (batchState.orders[i].devices[j].sn === sn) {
-        batchState.orders[i].devices.splice(j, 1);
-        break;
-      }
-    }
-  }
-  // Clean up empty orders
-  batchState.orders = batchState.orders.filter(function(o) { return o.devices.length > 0; });
-  if (batchState.currentSN === sn) batchState.currentSN = null;
-
-  saveBatchState();
-  renderPendingList();
+  if (!confirm("确定要删除设备 " + sn + " 吗？")) return;
+  deletePendingDevice(sn).then(function() {
+    if (batchState.currentSN === sn) batchState.currentSN = null;
+    refreshPendingList();
+  }).catch(function(err) {
+    alert("删除失败: " + err.message);
+  });
 }
-
 function deleteAllDevices() {
   if (!confirm("确定要删除列表中所有设备吗？已测试的记录将保留。")) return;
-  batchState.devices = [];
-  batchState.orders = [];
-  batchState.currentSN = null;
-  saveBatchState();
-  renderPendingList();
+  deleteAllPendingDevices().then(function() {
+    batchState.currentSN = null;
+    refreshPendingList();
+  }).catch(function(err) {
+    alert("删除失败: " + err.message);
+  });
 }
-
 function startBatchDevice(sn) {
   var device = null;
-  for (var i = 0; i < batchState.devices.length; i++) {
-    if (batchState.devices[i].sn === sn) { device = batchState.devices[i]; break; }
+  for (var i = 0; i < _pendingCache.length; i++) {
+    if (_pendingCache[i].sn === sn) { device = _pendingCache[i]; break; }
   }
   if (!device || device.tested) return;
 
-  batchState.currentSN = sn;
+  // Acquire optimistic lock
+  var tester = stepData["tester"] || "unknown";
+  var proceed = function(device) {
+    batchState.currentSN = sn;
+    var model = device.model;
+    // Model disambiguation (same as before)
+    if (model === "X1" || model === "E1" || model === "X1 Lite" || model === "E1 Lite" || model === "X1 Pro" || model === "E1 Pro") {
+      if (model !== "X1") { var sel = model; model = "X1"; }
+    }
+    if (model === "Sfaira one" || model === "Sfaira One" || model === "Sfaira One Plus" || model === "Sfaira one plus") {
+      model = "SfairaOne";
+    }
+    if (model === "P2" || model === "P2 Plus") {
+      // Keep as-is, already correct
+    }
+    if (model === "SV100" || model === "SV100 Dual" || model === "SV100 INS" || model === "SV100 INS-D" || model === "SV100-INS" || model === "SV100-INS-Dual") {
+      if (model.indexOf("INS") >= 0) {
+        if (model.indexOf("Dual") >= 0) model = "SV100 INS-D";
+        else model = "SV100 INS";
+      } else if (model.indexOf("Dual") >= 0) model = "SV100 Dual";
+      else model = "SV100";
+    }
+    if (!testStepsConfig[model]) model = "X1";
 
-  var model = device.model;
-  // Handle ambiguous models
-  if (model === "X1系列/E1") {
-    model = confirm("21系列SN，请选择型号：\n「确定」= X1\n「取消」= E1") ? "X1" : "E1";
-  }
-  if (model === "Sfaira系列") {
-    model = confirm("1432系列SN，请选择型号：\n「确定」= Sfaira one\n「取消」= Sfaira one plus") ? "Sfaira one" : "Sfaira one plus";
-  }
-  if (model === "P2系列") {
-    model = confirm("18系列SN，请选择型号：\n「确定」= P2\n「取消」= P2 Plus") ? "P2" : "P2 Plus";
-  }
-  if (model === "SV100系列") {
-    var choice = prompt("16系列SN，请选择型号：\n输入 1 = SV100\n输入 2 = SV100 Dual\n输入 3 = SV100 INS\n输入 4 = SV100 INS-D", "1");
-    if (choice === "2") model = "SV100 Dual";
-    else if (choice === "3") model = "SV100 INS";
-    else if (choice === "4") model = "SV100 INS-D";
-    else model = "SV100";
-  }
-  if (!model || model === "未知型号" || !testStepsConfig[model] || testStepsConfig[model].length === 0) {
-    model = "X1";
-  }
+    switchTab("test");
+    selectProduct(model, {
+      sn: device.sn,
+      order: device.order,
+      country: device.country,
+      regCode: device.regCode
+    });
+    var drawer = document.getElementById("batchDrawer");
+    if (drawer) drawer.style.display = "none";
+    renderPendingList();
+  };
 
-  switchTab("test");
-  selectProduct(model, {
-    sn: device.sn,
-    order: device.order,
-    country: device.country,
-    regCode: device.regCode
+  acquireLock(sn, tester).then(function(locked) {
+    if (!locked) {
+      alert("该设备正在被其他人测试中，请稍后再试。");
+      return;
+    }
+    proceed(device);
+  }).catch(function() {
+    // Graceful degradation: allow testing even if lock check fails
+    proceed(device);
   });
-
-  // Close drawer after selection
-  var drawer = document.getElementById("batchDrawer");
-  if (drawer) drawer.style.display = "none";
-
-  renderPendingList();
 }
 function markBatchDeviceDone(sn) {
-  for (var i = 0; i < batchState.devices.length; i++) {
-    if (batchState.devices[i].sn === sn) {
-      batchState.devices[i].tested = true;
-      break;
-    }
+  // Optimistic cache update
+  for (var i = 0; i < _pendingCache.length; i++) {
+    if (_pendingCache[i].sn === sn) { _pendingCache[i].tested = true; break; }
   }
-  if (batchState.currentSN === sn) {
-    batchState.currentSN = null;
-  }
-  saveBatchState();
+  // Persist to cloud
+  savePendingDevice({ sn: sn, tested: true }).catch(function(err) {
+    console.warn("Failed to mark done:", err);
+  });
+  // Release lock
+  releaseLock(sn);
+
+  if (batchState.currentSN === sn) batchState.currentSN = null;
   renderPendingList();
 
+  // Auto-advance to next untested
   var next = null;
-  for (var j = 0; j < batchState.devices.length; j++) {
-    if (!batchState.devices[j].tested) { next = batchState.devices[j]; break; }
+  for (var j = 0; j < _pendingCache.length; j++) {
+    if (!_pendingCache[j].tested) { next = _pendingCache[j]; break; }
   }
   if (next) {
     startBatchDevice(next.sn);
@@ -7811,12 +7549,11 @@ function markBatchDeviceDone(sn) {
     stepData = {};
     var wizard = document.getElementById("testWizard");
     if (wizard) {
-      wizard.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:12px;">🎉</div><div style="font-size:18px;font-weight:700;color:var(--success);margin-bottom:8px;">全部测试完成！</div><div style="font-size:13px;color:var(--text-secondary);">共 ' + batchState.devices.length + ' 台设备已完成测试</div></div>';
+      wizard.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="width:80px;height:80px;margin:0 auto 16px;border-radius:50%;overflow:hidden;"><img src="bot-avatar.png" alt="小瓜" style="width:100%;height:100%;object-fit:cover;"></div><div style="font-size:18px;font-weight:700;color:var(--success);margin-bottom:8px;">🎉 全部测试完成！</div><div style="font-size:13px;color:var(--text-secondary);">共 ' + _pendingCache.length + ' 台设备已完成测试</div></div>';
     }
     renderProductList();
   }
 }
-
 function generateQRCode(regCode) {
   return new Promise(function(resolve, reject) {
     if (!regCode) { reject(new Error("No registration code")); return; }
@@ -7841,16 +7578,198 @@ function generateQRCode(regCode) {
 // ==================== BATCH TEST IMPORT END ====================
 
 // === Local file persistence ===
-var autoSaveServer = null;        // "server" = localhost:8765, "fsa" = File System Access, null = unavailable
-var autoFileHandle = null;
-var autoFileDB = null;
-var AUTO_SAVE_URL = "//" + window.location.hostname + ":8765";
-
 // ==================== SUPABASE CLOUD SYNC ====================
 var SUPABASE_URL = "https://wqtkyuarvddpyehpjzqe.supabase.co";
 var SUPABASE_KEY = "sb_publishable_xbZNH82SqHbLqbbF34mSTQ_NLoAFO-j";
+
+// ==================== CLOUD DATA LAYER v2 ====================
+var _pendingCache = [];
+var _recordsCache = [];
+
+function loadPendingDevices() {
+  var sb = getSupabase();
+  if (!sb) return Promise.resolve([]);
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return sb.from("pending_devices")
+    .select("*").gte("created_at", today.toISOString())
+    .order("created_at", { ascending: true })
+    .then(function(r) {
+      if (r.error) { console.warn("[Supabase] loadPendingDevices:", r.error.message); return []; }
+      return (r.data || []).map(function(row) {
+        return {
+          sn: row.sn, model: row.model, order: row.order_no,
+          country: row.country, tested: row.tested,
+          locked_by: row.locked_by, locked_at: row.locked_at,
+          regCode: (row.device_data && row.device_data.regCode) || null
+        };
+      });
+    });
+}
+
+function loadTestRecords() {
+  var sb = getSupabase();
+  if (!sb) return Promise.resolve([]);
+  return sb.from("test_records_v2")
+    .select("*").order("tested_at", { ascending: false })
+    .then(function(r) {
+      if (r.error) { console.warn("[Supabase] loadTestRecords:", r.error.message); return []; }
+      return (r.data || []).map(function(row) {
+        return {
+          sn: row.sn, model: row.model, order: row.order_no,
+          country: row.country, tester: row.tester,
+          firmware: row.firmware, result: row.result,
+          date: row.tested_at ? row.tested_at.split("T")[0] : "",
+          time: row.tested_at ? row.tested_at.split("T")[1].split(".")[0] : "",
+          registration: (row.test_data && row.test_data.registration) || "",
+          importantInfo: (row.test_data && row.test_data.importantInfo) || "",
+          remark1: (row.test_data && row.test_data.remark1) || "",
+          remark2: (row.test_data && row.test_data.remark2) || "",
+          regCode: (row.test_data && row.test_data.regCode) || ""
+        };
+      });
+    });
+}
+
+function refreshPendingList() {
+  loadPendingDevices().then(function(devices) {
+    _pendingCache = devices;
+    renderPendingList();
+  }).catch(function(err) {
+    console.warn("Failed to load pending:", err);
+    renderPendingList();
+  });
+}
+
+function refreshRecordsTable() {
+  loadTestRecords().then(function(records) {
+    _recordsCache = records;
+    renderRecordsTable();
+  }).catch(function(err) {
+    console.warn("Failed to load records:", err);
+  });
+}
+
+function savePendingDevice(device) {
+  var sb = getSupabase();
+  if (!sb) return Promise.reject(new Error("Supabase not available"));
+  return sb.from("pending_devices").upsert({
+    sn: device.sn, model: device.model,
+    order_no: device.order || device.order_no || "",
+    country: device.country || "",
+    tested: device.tested || false,
+    device_data: { regCode: device.regCode || null },
+    created_at: device.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }, { onConflict: "sn" }).then(function(r) {
+    if (r.error) throw new Error(r.error.message);
+    return r;
+  });
+}
+
+function saveTestRecord(record) {
+  var sb = getSupabase();
+  if (!sb) return Promise.reject(new Error("Supabase not available"));
+  return sb.from("test_records_v2").upsert({
+    sn: record.sn, model: record.model,
+    order_no: record.order || "", country: record.country || "",
+    tester: record.tester || "", firmware: record.firmware || "",
+    result: record.result || "pass",
+    test_data: {
+      registration: record.registration || "",
+      importantInfo: record.importantInfo || "",
+      remark1: record.remark1 || "", remark2: record.remark2 || "",
+      regCode: record.regCode || "",
+      failDetail: record.failDetail || "",
+      stepDetails: record.stepDetails || []
+    },
+    tested_at: new Date().toISOString()
+  }, { onConflict: "sn" }).then(function(r) {
+    if (r.error) throw new Error(r.error.message);
+    return r;
+  });
+}
+
+function deletePendingDevice(sn) {
+  var sb = getSupabase();
+  if (!sb) return Promise.reject(new Error("Supabase not available"));
+  return sb.from("pending_devices").delete().eq("sn", sn).then(function(r) {
+    if (r.error) throw new Error(r.error.message);
+    return r;
+  });
+}
+
+function deleteAllPendingDevices() {
+  var sb = getSupabase();
+  if (!sb) return Promise.reject(new Error("Supabase not available"));
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  return sb.from("pending_devices").delete().gte("created_at", today.toISOString()).then(function(r) {
+    if (r.error) throw new Error(r.error.message);
+    return r;
+  });
+}
+
+function deleteTestRecord(sn) {
+  var sb = getSupabase();
+  if (!sb) return Promise.reject(new Error("Supabase not available"));
+  return sb.from("test_records_v2").delete().eq("sn", sn).then(function(r) {
+    if (r.error) throw new Error(r.error.message);
+    return r;
+  });
+}
+
+function batchImportDevices(devices) {
+  var sb = getSupabase();
+  if (!sb) return Promise.reject(new Error("Supabase not available"));
+  var rows = devices.map(function(d) {
+    return {
+      sn: d.sn, model: d.model, order_no: d.order || "",
+      country: d.country || "", tested: d.tested || false,
+      device_data: { regCode: d.regCode || null },
+      updated_at: new Date().toISOString()
+    };
+  });
+  return sb.from("pending_devices").upsert(rows, { onConflict: "sn" }).then(function(r) {
+    if (r.error) throw new Error(r.error.message);
+    return r;
+  });
+}
+
+function acquireLock(sn, user) {
+  var sb = getSupabase();
+  if (!sb) return Promise.resolve(false);
+  return sb.from("pending_devices").select("locked_by, locked_at").eq("sn", sn).maybeSingle().then(function(r) {
+    if (r.error || !r.data) return false;
+    var row = r.data;
+    var fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    if (row.locked_by && row.locked_at && new Date(row.locked_at).getTime() > fiveMinAgo) {
+      if (row.locked_by !== user) return false;
+    }
+    return sb.from("pending_devices").update({
+      locked_by: user, locked_at: new Date().toISOString()
+    }).eq("sn", sn).then(function(r2) { return !r2.error; });
+  });
+}
+
+function releaseLock(sn) {
+  var sb = getSupabase();
+  if (!sb) return Promise.resolve();
+  return sb.from("pending_devices").update({
+    locked_by: null, locked_at: null
+  }).eq("sn", sn).then(function(r) {
+    if (r.error) console.warn("[Supabase] releaseLock:", r.error.message);
+  });
+}
+
+window.addEventListener("beforeunload", function() {
+  if (batchState && batchState.currentSN) {
+    releaseLock(batchState.currentSN);
+  }
+});
+
+// ==================== END CLOUD DATA LAYER v2 ====================
+
 var _supabase;
-var _syncPending = false;
 
 function getSupabase() {
   if (!_supabase && typeof supabase !== "undefined") {
@@ -7859,532 +7778,7 @@ function getSupabase() {
   return _supabase;
 }
 
-function syncBatchToCloud() {
-  var sb = getSupabase();
-  if (!sb || _syncPending) return;
-  _syncPending = true;
-  var tid = getTerminalId();
-  sb.from("batch_state").select("data").eq("id", 1).maybeSingle().then(function(r) {
-    var cloudData = (r.data && r.data.data) ? r.data.data : { devices: [], orders: [], currentSN: null };
-    // Remove this terminal's devices from cloud, then add local ones
-    var otherDevices = cloudData.devices.filter(function(d) { return d.terminalId !== tid; });
-    var otherSNs = {};
-    otherDevices.forEach(function(d) { otherSNs[d.sn] = true; });
-    // Only sync devices that belong to this terminal, dedupe against cloud
-    var now = Date.now();
-    var myDevices = batchState.devices.filter(function(d) {
-      if (d.terminalId && d.terminalId !== tid) return false;
-      if (otherSNs[d.sn]) return false; // already in cloud under another terminal
-      return true;
-    });
-    // Stamp lastModified so recovery can apply 1-minute time window
-    myDevices.forEach(function(d) { d.lastModified = now; });
-    var mergedDevices = otherDevices.concat(myDevices);
-    // Rebuild orders from merged devices
-    var orderMap = {};
-    mergedDevices.forEach(function(d) {
-      var oid = d.order || "";
-      if (oid && !orderMap[oid]) orderMap[oid] = { orderNumber: oid, devices: [] };
-      if (oid) orderMap[oid].devices.push(d);
-    });
-    var mergedOrders = [];
-    for (var k in orderMap) { if (orderMap.hasOwnProperty(k)) mergedOrders.push(orderMap[k]); }
-    var merged = { devices: mergedDevices, orders: mergedOrders, currentSN: null };
-    if (mergedDevices.length > 0) {
-      sb.from("batch_state").upsert({ id: 1, data: merged, updated_at: new Date().toISOString() }).then(function(r2) {
-        _syncPending = false;
-        if (r2.error) console.warn("[Supabase] batch_state upsert failed:", r2.error.message);
-      });
-    } else {
-      sb.from("batch_state").delete().eq("id", 1).then(function(r2) {
-        _syncPending = false;
-        if (r2.error) console.warn("[Supabase] batch_state delete failed:", r2.error.message);
-      });
-    }
-  }).catch(function() { _syncPending = false; });
-}
-
-function mergeBatchStates(cloud, local) {
-  var cloudMap = {};
-  for (var i = 0; i < cloud.devices.length; i++) {
-    cloudMap[cloud.devices[i].sn] = cloud.devices[i];
-  }
-  // Add local devices not in cloud
-  for (var i = 0; i < local.devices.length; i++) {
-    var ld = local.devices[i];
-    if (!cloudMap[ld.sn]) {
-      cloud.devices.push(ld);
-      cloudMap[ld.sn] = ld;
-    } else {
-      // Preserve tested flag: local wins if more recent (just tested)
-      if (ld.tested && !cloudMap[ld.sn].tested) cloudMap[ld.sn].tested = true;
-      // Preserve regCode
-      if (ld.regCode && !cloudMap[ld.sn].regCode) cloudMap[ld.sn].regCode = ld.regCode;
-    }
-  }
-  // Merge orders
-  var cloudOrderMap = {};
-  for (var i = 0; i < cloud.orders.length; i++) {
-    cloudOrderMap[cloud.orders[i].orderNumber] = cloud.orders[i];
-  }
-  for (var i = 0; i < local.orders.length; i++) {
-    var lo = local.orders[i];
-    if (!cloudOrderMap[lo.orderNumber]) {
-      cloud.orders.push(lo);
-      cloudOrderMap[lo.orderNumber] = lo;
-    } else {
-      // Merge devices in orders
-      var co = cloudOrderMap[lo.orderNumber];
-      var coSNs = {};
-      for (var j = 0; j < co.devices.length; j++) { coSNs[co.devices[j].sn] = true; }
-      for (var j = 0; j < lo.devices.length; j++) {
-        if (!coSNs[lo.devices[j].sn]) { co.devices.push(lo.devices[j]); coSNs[lo.devices[j].sn] = true; }
-      }
-    }
-  }
-  return cloud;
-}
-
-function loadBatchFromCloud(callback) {
-  var sb = getSupabase();
-  if (!sb) { if (callback) callback(null); return; }
-  sb.from("batch_state").select("data").eq("id", 1).maybeSingle().then(function(r) {
-    if (r.error || !r.data) { if (callback) callback(null); return; }
-    if (callback) callback(r.data.data);
-  });
-}
-
-function syncRecordToCloud(record) {
-  var sb = getSupabase();
-  if (!sb) return;
-  sb.from("test_records").insert({
-    time: record.date || "", country: record.country || "", order_no: record.order || "",
-    tester: record.tester || "", model: record.model || "", sn: record.sn || "",
-    firmware: record.firmware || "", registered: record.registration || "",
-    other_info: record.importantInfo || "", imei: record.remark1 || "", remark2: record.remark2 || ""
-  }).then(function(r) {
-    if (r.error) console.warn("[Supabase] record insert failed:", r.error.message);
-  });
-}
-
-function deleteRecordFromCloud(sn, time) {
-  var sb = getSupabase();
-  if (!sb) return;
-  sb.from("test_records").delete().eq("sn", sn).eq("time", time).then(function(r) {
-    if (r.error) console.warn("[Supabase] record delete failed:", r.error.message);
-  });
-}
-
-function loadRecordsFromCloud(callback) {
-  var sb = getSupabase();
-  if (!sb) { if (callback) callback([]); return; }
-  sb.from("test_records").select("*").order("id", { ascending: false }).then(function(r) {
-    if (r.error) { if (callback) callback([]); return; }
-    var records = (r.data || []).map(function(row) {
-      return { date: row.time, country: row.country, order: row.order_no, tester: row.tester,
-        model: row.model, sn: row.sn, firmware: row.firmware, registration: row.registered,
-        importantInfo: row.other_info, remark1: row.imei, remark2: row.remark2, _cloudId: row.id };
-    });
-    if (callback) callback(records);
-  });
-}
-
-function migrateLocalToCloud() {
-  var sb = getSupabase();
-  if (!sb) return;
-  // Migrate batchState
-  loadBatchFromCloud(function(cloudData) {
-    if (!cloudData || !cloudData.devices || cloudData.devices.length === 0) {
-      var localState = null;
-      try { localState = JSON.parse(localStorage.getItem("batchState") || "null"); } catch(e) {}
-      if (localState && localState.devices && localState.devices.length > 0) {
-        batchState = localState;
-        syncBatchToCloud();
-      }
-    }
-  });
-  // Migrate test records
-  sb.from("test_records").select("id", { count: "exact", head: true }).then(function(r) {
-    if (r.count === 0) {
-      var localRecords = [];
-      try { localRecords = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
-      if (localRecords.length > 0) {
-        localRecords.forEach(function(rec) { syncRecordToCloud(rec); });
-      }
-    }
-  });
-}
-
-// Periodic cloud refresh — keeps all users in sync
-var _lastCloudRefresh = 0;
-setInterval(function() {
-  var sb = getSupabase();
-  if (!sb) return;
-  // Only refresh if user is on the test tab or has been recently
-  var testPanel = document.getElementById("testPanel");
-  if (!testPanel || !testPanel.classList.contains("active")) return;
-  loadBatchFromCloud(function(cloudData) {
-    if (!cloudData || !cloudData.devices) return;
-    var tid = getTerminalId();
-    // If local list is intentionally empty, skip cloud merge (respect user's delete)
-    if (batchState.devices.length === 0 && batchState.orders.length === 0) return;
-    // Only track this terminal's devices from cloud
-    var myCloudDevices = cloudData.devices.filter(function(d) { return !d.terminalId || d.terminalId === tid; });
-    // Build a map for quick lookup
-    var cloudMap = {};
-    myCloudDevices.forEach(function(d) { cloudMap[d.sn] = d; });
-    var localMap = {};
-    batchState.devices.forEach(function(d) { localMap[d.sn] = d; });
-    var changed = false;
-    // Only detect updates to existing devices, not new devices (don't resurrect deleted)
-    myCloudDevices.forEach(function(d) {
-      if (localMap[d.sn] && !localMap[d.sn].tested && d.tested) { changed = true; }
-    });
-    // Check for removed devices (someone else deleted)
-    if (!changed) {
-      batchState.devices.forEach(function(d) {
-        if (!cloudMap[d.sn]) { changed = true; }
-      });
-    }
-    if (changed) {
-      // Merge tested flags from cloud into local devices (only upgrade, never downgrade)
-      var cloudTestedMap = {};
-      myCloudDevices.forEach(function(d) { if (d.tested) cloudTestedMap[d.sn] = true; });
-      batchState.devices.forEach(function(d) {
-        if (cloudTestedMap[d.sn]) d.tested = true;
-      });
-      // Remove local devices not in cloud (deleted by another tab)
-      batchState.devices = batchState.devices.filter(function(d) { return cloudMap[d.sn]; });
-      localStorage.setItem("batchState", JSON.stringify(batchState));
-      renderPendingList();
-    }
-  });
-}, 30000);
-
-var autoSaveEnabled = false;      // user has consented
-
-// -- Show consent banner when server is detected --
-function showAutoSavePrompt() {
-  // Delegate to IDB consent banner
-  showConsentBanner();
-}
-
-function consentAutoSave() {
-  autoSaveEnabled = true;
-  autoSaveServer = "server";
-  // Also enable IDB persistence
-  if (window._idbEnable) window._idbEnable();
-  var banner = document.getElementById("autoSaveBanner");
-  if (banner) banner.style.display = "none";
-  // Merge server data, then push local data to server
-  fetchServerData(function(data) {
-    if (data && data.length > 0) {
-      mergeIntoLocal(data);
-    }
-    // Push existing localStorage records to server
-    persistToFile();
-    // Load batch state from server, fallback to localStorage
-    loadBatchStateFromServer(function(loaded) {
-      if (!loaded) {
-        // No server data, keep localStorage state
-        loadBatchState();
-      }
-      // Push current state to server
-      saveBatchStateToServer();
-    });
-    updateAutoSaveUI();
-  });
-}
-
-function dismissAutoSave() {
-  autoSaveEnabled = false;
-  var banner = document.getElementById("autoSaveBanner");
-  if (banner) banner.style.display = "none";
-  updateAutoSaveUI();
-}
-
-function fetchServerData(callback) {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", AUTO_SAVE_URL + "/", true);
-  xhr.timeout = 3000;
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      try { callback(JSON.parse(xhr.responseText)); } catch(e) { callback(null); }
-    } else { callback(null); }
-  };
-  xhr.onerror = function() { callback(null); };
-  xhr.ontimeout = function() { callback(null); };
-  xhr.send();
-}
-
-function mergeIntoLocal(data) {
-  var existing = [];
-  try { existing = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
-  var seen = {};
-  var merged = [];
-  data.concat(existing).forEach(function(r) {
-    var k = r.time + "|" + r.model + "|" + r.sn;
-    if (!seen[k]) { seen[k] = true; merged.push(r); }
-  });
-  localStorage.setItem("deviceTestRecords", JSON.stringify(merged));
-  renderRecordsTable();
-}
-
-// -- Detect server on load --
-(function initAutoSave() {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", AUTO_SAVE_URL + "/", true);
-  xhr.timeout = 2000;
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      autoSaveServer = "server";
-      // Don't show a separate banner - IDB consent flow handles that
-      // Just silently enable server sync for when consent happens
-      return;
-    }
-    tryFSA();
-  };
-  xhr.onerror = xhr.ontimeout = function() { tryFSA(); };
-  xhr.send();
-
-  function tryFSA() {
-    if (typeof window.showSaveFilePicker === "function") {
-      restoreAutoHandle();
-    }
-    updateAutoSaveUI();
-  }
-})();
-
-// -- File System Access API (localhost without server) --
-function openAutoFileDB() {
-  return new Promise(function(resolve, reject) {
-    var req = indexedDB.open("DeviceTestAutoFile", 1);
-    req.onupgradeneeded = function(e) {
-      if (!e.target.result.objectStoreNames.contains("handles")) {
-        e.target.result.createObjectStore("handles");
-      }
-    };
-    req.onsuccess = function(e) { autoFileDB = e.target.result; resolve(); };
-    req.onerror = function() { reject(); };
-  });
-}
-
-function persistAutoHandle() {
-  if (!autoFileDB || !autoFileHandle) return;
-  var tx = autoFileDB.transaction("handles", "readwrite");
-  tx.objectStore("handles").put(autoFileHandle, "autoSaveFile");
-}
-
-function restoreAutoHandle() {
-  openAutoFileDB().then(function() {
-    var tx = autoFileDB.transaction("handles", "readonly");
-    var req = tx.objectStore("handles").get("autoSaveFile");
-    req.onsuccess = function(e) {
-      if (e.target.result) {
-        e.target.result.queryPermission({ mode: "readwrite" }).then(function(p) {
-          if (p === "granted") {
-            autoFileHandle = e.target.result;
-            autoSaveServer = "fsa";
-            autoSaveEnabled = true;
-            updateAutoSaveUI();
-            syncFromAutoFile();
-          }
-        }).catch(function(){});
-      }
-    };
-  }).catch(function(){});
-}
-
-function setupAutoSave() {
-  if (typeof window.showSaveFilePicker !== "function") return;
-  window.showSaveFilePicker({
-    suggestedName: "device_test_autosave.json",
-    types: [{ description: "JSON", accept: { "application/json": [".json"] } }]
-  }).then(function(h) {
-    autoFileHandle = h;
-    autoSaveServer = "fsa";
-    autoSaveEnabled = true;
-    if (autoFileDB) persistAutoHandle();
-    else openAutoFileDB().then(function() { persistAutoHandle(); });
-    updateAutoSaveUI();
-    // Sync from file first, then persist — prevents overwriting existing backup
-    syncFromAutoFile().then(function() { persistToFile(); });
-  }).catch(function(e) {
-    if (e.name !== "AbortError") alert("设置失败: " + e.message);
-  });
-}
-
-function writeAutoFile() {
-  if (!autoFileHandle) return;
-  var records = [];
-  try { records = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
-  autoFileHandle.createWritable().then(function(w) {
-    w.write(JSON.stringify(records, null, 2));
-    w.close();
-  }).catch(function() {
-    autoFileHandle = null;
-    autoSaveServer = null;
-    autoSaveEnabled = false;
-    updateAutoSaveUI();
-  });
-}
-
-function syncFromAutoFile() {
-  if (!autoFileHandle) return Promise.resolve();
-  return autoFileHandle.getFile().then(function(f) {
-    f.text().then(function(t) {
-      try {
-        var data = JSON.parse(t);
-        if (Array.isArray(data) && data.length > 0) {
-          mergeIntoLocal(data);
-        }
-      } catch(e) {}
-    });
-  }).catch(function() {
-    autoFileHandle = null;
-    autoSaveServer = null;
-    autoSaveEnabled = false;
-    updateAutoSaveUI();
-  });
-}
-
 // -- Save after each data change --
-function persistToFile() {
-  if (!autoSaveEnabled) return;
-  if (autoSaveServer === "server") {
-    var records = localStorage.getItem("deviceTestRecords") || "[]";
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", AUTO_SAVE_URL + "/", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.timeout = 3000;
-    xhr.onload = function() {
-      if (xhr.status === 200) {
-        console.log("[AutoSave] Saved " + JSON.parse(records).length + " records");
-      }
-    };
-    xhr.onerror = function() {
-      console.error("[AutoSave] POST failed");
-      alert("自动保存失败：无法连接本地服务。\n请确认已双击 启动自动保存.bat 并保持窗口打开。");
-      autoSaveEnabled = false;
-      autoSaveServer = null;
-      updateAutoSaveUI();
-    };
-    xhr.ontimeout = function() {
-      console.error("[AutoSave] POST timeout");
-    };
-    xhr.send(records);
-  } else if (autoSaveServer === "fsa") {
-    writeAutoFile();
-  }
-}
-// -- "从本地恢复" button - when server, fetch directly; otherwise upload file --
-function restoreFromLocal() {
-  if (autoSaveServer === "server") {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", AUTO_SAVE_URL + "/", true);
-    xhr.timeout = 3000;
-    xhr.onload = function() {
-      if (xhr.status === 200) {
-        try {
-          var data = JSON.parse(xhr.responseText);
-          if (Array.isArray(data) && data.length > 0) {
-            mergeIntoLocal(data);
-            alert("已从本地恢复 " + data.length + " 条记录");
-          } else {
-            alert("本地暂无备份数据");
-          }
-        } catch(e) { alert("读取失败"); }
-      } else { alert("无法连接自动保存服务"); }
-    };
-    xhr.onerror = function() { alert("无法连接自动保存服务，请确认 auto_save_server.js 已启动"); };
-    xhr.send();
-  } else if (typeof window.showOpenFilePicker === "function") {
-    // FSA: open file + bind auto-save in one step
-    window.showOpenFilePicker({
-      types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
-      multiple: false
-    }).then(function(handles) {
-      var h = handles[0];
-      h.getFile().then(function(f) {
-        f.text().then(function(t) {
-          try {
-            var data = JSON.parse(t);
-            if (!Array.isArray(data)) { alert("文件格式不正确"); return; }
-            mergeIntoLocal(data);
-            autoFileHandle = h;
-            autoSaveServer = "fsa";
-            autoSaveEnabled = true;
-            if (autoFileDB) persistAutoHandle();
-            else openAutoFileDB().then(function() { persistAutoHandle(); });
-            updateAutoSaveUI();
-            alert("已恢复 " + data.length + " 条记录，自动保存已绑定到该文件");
-          } catch(err) { alert("文件解析失败"); }
-        });
-      });
-    }).catch(function(e) {
-      if (e.name !== "AbortError") alert("打开文件失败: " + e.message);
-    });
-  } else {
-    // Fallback: plain file input (browsers without FSA)
-    var input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-    input.onchange = function(e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function(ev) {
-        try {
-          var data = JSON.parse(ev.target.result);
-          if (!Array.isArray(data)) { alert("文件格式不正确"); return; }
-          mergeIntoLocal(data);
-          alert("已导入 " + data.length + " 条记录（此浏览器不支持自动保存，请手动导出备份）");
-        } catch(err) { alert("文件解析失败"); }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  }
-}
-
-function updateAutoSaveUI() {
-  var btn = document.getElementById("btnAutoSave");
-  var resBtn = document.getElementById("btnRestore");
-  if (autoSaveEnabled && autoSaveServer) {
-    if (btn) {
-      btn.textContent = "✓ 自动保存中";
-      btn.style.color = "#4caf50";
-      btn.style.display = "";
-      btn.onclick = null;
-    }
-    if (resBtn) {
-      resBtn.textContent = "从本地恢复";
-      resBtn.title = "从自动保存文件恢复数据";
-    }
-  } else if (autoSaveServer === "server" && !autoSaveEnabled) {
-    // Server available but user declined - show option to re-enable
-    if (btn) {
-      btn.textContent = "启用自动保存";
-      btn.style.color = "";
-      btn.style.display = "";
-      btn.onclick = function() { showAutoSavePrompt(); };
-    }
-    if (resBtn) {
-      resBtn.textContent = "从本地恢复";
-      resBtn.title = "从本地存储恢复数据";
-    }
-  } else if (typeof window.showSaveFilePicker === "function") {
-    if (btn) {
-      btn.textContent = "自动保存";
-      btn.style.color = "";
-      btn.style.display = "";
-      btn.onclick = setupAutoSave;
-    }
-  } else {
-    if (btn) btn.style.display = "none";
-  }
-}
-
 function finishTest() {
   saveCurrentStepData();
   var steps = testStepsConfig[currentProduct];
@@ -8426,13 +7820,11 @@ function finishTest() {
     sn: stepData["sn"] || "",
     firmware: buildFirmwareStr(stepData),
     registration: (function() {
-      var regVal = stepData["registration"] || "";
-      var regStep = null;
-      for (var si = 0; si < steps.length; si++) { if (steps[si].key === "registration") { regStep = steps[si]; break; } }
-      if (regStep && regStep.options && regVal === regStep.options[regStep.options.length - 1]) {
-        return stepData["registration_custom"] || regVal;
+      var reg = stepData["registration"] || "";
+      if (reg === "自定义" || reg === "自定义期限") {
+        reg = stepData["registration_custom"] || "自定义";
       }
-      return regVal;
+      return reg;
     })(),
     regCode: stepData["regCode"] || "",
     testContent: stepData["testContent"] || stepTitles,
@@ -8447,14 +7839,15 @@ function finishTest() {
     })
   };
 
-  // Save to localStorage
-  var records = [];
-  try { records = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
-  records.unshift(record);
-  localStorage.setItem("deviceTestRecords", JSON.stringify(records));
-  persistToFile();
-  syncRecordToCloud(record);
-
+  // Save to cloud directly
+  saveTestRecord(record).then(function() {
+    _recordsCache.unshift(record);
+    renderRecordsTable();
+  }).catch(function(err) {
+    alert("保存测试记录失败: " + err.message);
+    _recordsCache.unshift(record);
+    renderRecordsTable();
+  });
   // Mark batch device as done
   if (batchState.currentSN) {
     markBatchDeviceDone(batchState.currentSN);
@@ -8475,30 +7868,11 @@ function finishTest() {
 }
 
 // Render records table
-function syncRecordsFromCloud() {
-  loadRecordsFromCloud(function(cloudRecords) {
-    if (cloudRecords && cloudRecords.length > 0) {
-      var existing = [];
-      try { existing = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
-      var seen = {};
-      var merged = [];
-      cloudRecords.concat(existing).forEach(function(r) {
-        var k = r.date + "|" + r.model + "|" + r.sn;
-        if (!seen[k]) { seen[k] = true; merged.push(r); }
-      });
-      merged.sort(function(a, b) { return (b.date || "").localeCompare(a.date || ""); });
-      localStorage.setItem("deviceTestRecords", JSON.stringify(merged));
-    }
-    renderRecordsTable();
-  });
-}
-
 function renderRecordsTable() {
   var tbody = document.getElementById("recordsBody");
   var countEl = document.getElementById("recordCount");
   var toggleBtn = document.getElementById("btnToggleRecords");
-  var records = [];
-  try { records = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
+  var records = _recordsCache;
 
   if (countEl) countEl.textContent = records.length;
 
@@ -8538,8 +7912,7 @@ function toggleRecords() {
   var overlay = document.getElementById("recordsPopupOverlay");
   var popupBody = document.getElementById("popupRecordsBody");
   var popupCount = document.getElementById("popupRecordCount");
-  var records = [];
-  try { records = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
+  var records = _recordsCache;
 
   if (popupCount) popupCount.textContent = records.length;
 
@@ -8566,22 +7939,19 @@ function closeRecordsPopup() {
 
 function deleteRecord(idx) {
   if (!confirm("确定要删除这条测试记录吗？")) return;
-  var records = [];
-  try { records = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
-  if (idx < 0 || idx >= records.length) return;
-  var removed = records[idx];
-  records.splice(idx, 1);
-  localStorage.setItem("deviceTestRecords", JSON.stringify(records));
-  persistToFile();
-  if (removed) deleteRecordFromCloud(removed.sn, removed.date);
-  renderRecordsTable();
+  if (idx < 0 || idx >= _recordsCache.length) return;
+  var removed = _recordsCache[idx];
+  deleteTestRecord(removed.sn).then(function() {
+    _recordsCache.splice(idx, 1);
+    renderRecordsTable();
+  }).catch(function(err) {
+    alert("删除失败: " + err.message);
+  });
 }
-
 function dateToExcelSerial(dateStr) { if (!dateStr) return ""; var parts = dateStr.split("-"); var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])); return 25569 + Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); }
 
 function exportRecords() {
-  var records = [];
-  try { records = JSON.parse(localStorage.getItem("deviceTestRecords") || "[]"); } catch(e) {}
+  var records = _recordsCache;
   if (records.length === 0) { alert("暂无记录可导出"); return; }
 
   var headers = ["时间","发货国家","订单号","测试人","设备型号","SN","固件版本","注册情况","其他重要信息","IMEI号","备注2"];
@@ -8630,148 +8000,6 @@ function exportRecords() {
   a.click();
   URL.revokeObjectURL(url);
 }
-
-// -- IndexedDB auto-backup: survives browser cache clears --
-(function() {
-  var _setItem = localStorage.setItem.bind(localStorage);
-  var _removeItem = localStorage.removeItem.bind(localStorage);
-  var _getItem = localStorage.getItem.bind(localStorage);
-  var db = null;
-  var consented = false;
-
-  function getDB(cb) {
-    if (db) { cb(db); return; }
-    var req = indexedDB.open("DeviceTestBackup", 1);
-    req.onupgradeneeded = function(e) {
-      var d = e.target.result;
-      if (!d.objectStoreNames.contains("state"))
-        d.createObjectStore("state");
-    };
-    req.onsuccess = function(e) { db = e.target.result; cb(db); };
-    req.onerror = function() { cb(null); };
-  }
-
-  function idbPut(key, value, cb) {
-    getDB(function(d) {
-      if (!d) return;
-      try { d.transaction("state","readwrite").objectStore("state").put(value, key); if (cb) cb(); } catch(e) {}
-    });
-  }
-
-  function idbGet(key, cb) {
-    getDB(function(d) {
-      if (!d) { cb(null); return; }
-      try {
-        var req = d.transaction("state","readonly").objectStore("state").get(key);
-        req.onsuccess = function() { cb(req.result); };
-        req.onerror = function() { cb(null); };
-      } catch(e) { cb(null); }
-    });
-  }
-
-  // Sync to IDB when localStorage changes (only after consent)
-  function syncToIDB(key, value) {
-    if (!consented) return;
-    idbPut(key, value);
-  }
-
-  // Override localStorage.setItem to auto-sync
-  localStorage.setItem = function(key, value) {
-    _setItem(key, value);
-    if (key === "deviceTestRecords" || key === "batchState") {
-      syncToIDB(key, value);
-    }
-  };
-  localStorage.removeItem = function(key) {
-    _removeItem(key);
-    if (key === "deviceTestRecords" || key === "batchState") {
-      if (!consented) return;
-      getDB(function(d) {
-        if (!d) return;
-        try { d.transaction("state","readwrite").objectStore("state").delete(key); } catch(e) {}
-      });
-    }
-  };
-
-  // Restore data from IDB into localStorage
-  function restoreFromIDB(cb) {
-    var restored = 0;
-    idbGet("deviceTestRecords", function(val) {
-      if (val) { _setItem("deviceTestRecords", val); restored++; }
-      idbGet("batchState", function(val2) {
-        if (val2) { _setItem("batchState", val2); restored++; }
-        if (restored > 0) {
-          if (_getItem("batchState")) loadBatchState();
-          renderRecordsTable();
-        }
-        if (cb) cb(restored > 0);
-      });
-    });
-  }
-
-  // Show consent banner
-  function showConsentBanner() {
-    var banner = document.getElementById("autoSaveBanner");
-    if (!banner) return;
-    banner.style.display = "flex";
-    // Update banner text to be about data persistence
-    var span = banner.querySelector("span");
-    if (span) span.textContent = "是否允许自动保存测试数据？授权后数据将在浏览器中持久保存，清理缓存也不会丢失。";
-    var btns = banner.querySelectorAll("button");
-    if (btns.length >= 2) {
-      btns[0].textContent = "同意";
-      btns[0].onclick = function() {
-        consented = true;
-        idbPut("consent", "1");
-        banner.style.display = "none";
-        // Sync current localStorage to IDB immediately
-        var recs = _getItem("deviceTestRecords");
-        if (recs) idbPut("deviceTestRecords", recs);
-        var bs = _getItem("batchState");
-        if (bs) idbPut("batchState", bs);
-        // If auto-save server is available, also sync with server
-        if (typeof autoSaveServer !== "undefined" && autoSaveServer === "server") {
-          fetchServerData(function(data) {
-            if (data && data.length > 0) mergeIntoLocal(data);
-            persistToFile();
-            loadBatchStateFromServer(function(loaded) {
-              if (!loaded) loadBatchState();
-              saveBatchStateToServer();
-            });
-          });
-        }
-        updateAutoSaveUI();
-      };
-      btns[1].textContent = "暂不";
-      btns[1].onclick = function() {
-        banner.style.display = "none";
-      };
-    }
-  }
-
-  // Expose for external use
-  window._idbPut = idbPut;
-  window._idbGet = idbGet;
-  window._idbConsented = function() { return consented; };
-  window._idbEnable = function() { consented = true; idbPut("consent", "1"); };
-  window._idbRestore = restoreFromIDB;
-
-  // Init: check consent, restore if needed
-  idbGet("consent", function(c) {
-    if (c) {
-      // Already consented - enable sync, restore if localStorage is empty
-      consented = true;
-      var hasRecords = _getItem("deviceTestRecords");
-      var hasBatch = _getItem("batchState");
-      if (!hasRecords || hasRecords === "[]" || !hasBatch || hasBatch === "null") {
-        restoreFromIDB();
-      }
-    } else {
-      // Not consented yet - show banner
-      showConsentBanner();
-    }
-  });
-})();
 
 // Ensure chat panel uses full app height when in chat mode
 (function() {
