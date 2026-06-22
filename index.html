@@ -7205,6 +7205,13 @@ function loadBatchState() {
   });
 }
 
+function resetLocalAndReload() {
+  localStorage.removeItem("batchState");
+  localStorage.removeItem("_terminalId");
+  document.cookie = "_terminalId=;path=/;max-age=0";
+  location.reload();
+}
+
 function openBatchDialog() {
   var overlay = document.getElementById("batchOverlay");
   var textarea = document.getElementById("batchTextarea");
