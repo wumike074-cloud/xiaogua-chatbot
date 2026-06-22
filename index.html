@@ -7523,13 +7523,19 @@ function startBatchDevice(sn) {
 }
 function markBatchDeviceDone(sn) {
   // Optimistic cache update
+  var dev = null;
   for (var i = 0; i < _pendingCache.length; i++) {
-    if (_pendingCache[i].sn === sn) { _pendingCache[i].tested = true; break; }
+    if (_pendingCache[i].sn === sn) { dev = _pendingCache[i]; _pendingCache[i].tested = true; break; }
   }
-  // Persist to cloud
-  savePendingDevice({ sn: sn, tested: true }).catch(function(err) {
-    console.warn("Failed to mark done:", err);
-  });
+  // Persist to cloud with full device data to avoid overwriting fields
+  if (dev) {
+    savePendingDevice({
+      sn: dev.sn, model: dev.model, order: dev.order,
+      country: dev.country, tested: true, regCode: dev.regCode
+    }).catch(function(err) {
+      console.warn("Failed to mark done:", err);
+    });
+  }
   // Release lock
   releaseLock(sn);
 
@@ -7577,7 +7583,6 @@ function generateQRCode(regCode) {
 }
 // ==================== BATCH TEST IMPORT END ====================
 
-// === Local file persistence ===
 // ==================== SUPABASE CLOUD SYNC ====================
 var SUPABASE_URL = "https://wqtkyuarvddpyehpjzqe.supabase.co";
 var SUPABASE_KEY = "sb_publishable_xbZNH82SqHbLqbbF34mSTQ_NLoAFO-j";
@@ -7738,16 +7743,18 @@ function batchImportDevices(devices) {
 function acquireLock(sn, user) {
   var sb = getSupabase();
   if (!sb) return Promise.resolve(false);
-  return sb.from("pending_devices").select("locked_by, locked_at").eq("sn", sn).maybeSingle().then(function(r) {
-    if (r.error || !r.data) return false;
-    var row = r.data;
-    var fiveMinAgo = Date.now() - 5 * 60 * 1000;
-    if (row.locked_by && row.locked_at && new Date(row.locked_at).getTime() > fiveMinAgo) {
-      if (row.locked_by !== user) return false;
-    }
-    return sb.from("pending_devices").update({
-      locked_by: user, locked_at: new Date().toISOString()
-    }).eq("sn", sn).then(function(r2) { return !r2.error; });
+  var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  // Conditional update: only acquire if no active lock or lock expired or owned by same user
+  return sb.from("pending_devices").update({
+    locked_by: user, locked_at: new Date().toISOString()
+  }).eq("sn", sn)
+  .or("locked_by.is.null,locked_at.lt." + fiveMinAgo + ",locked_by.eq." + user)
+  .then(function(r) {
+    if (r.error) return false;
+    // Verify: read back to confirm we own the lock
+    return sb.from("pending_devices").select("locked_by").eq("sn", sn).maybeSingle().then(function(r2) {
+      return r2.data && r2.data.locked_by === user;
+    });
   });
 }
 
@@ -7843,28 +7850,23 @@ function finishTest() {
   saveTestRecord(record).then(function() {
     _recordsCache.unshift(record);
     renderRecordsTable();
+    // Mark batch device as done (only after record is saved)
+    if (batchState.currentSN) {
+      markBatchDeviceDone(batchState.currentSN);
+    }
+    // Reset test
+    currentStep = 0;
+    stepData = {};
+    renderStep();
+    // Flash effect on records
+    var recDiv = document.getElementById("testRecords");
+    recDiv.style.background = "#e8f5e9";
+    setTimeout(function() { recDiv.style.background = ""; }, 1000);
   }).catch(function(err) {
     alert("保存测试记录失败: " + err.message);
     _recordsCache.unshift(record);
     renderRecordsTable();
   });
-  // Mark batch device as done
-  if (batchState.currentSN) {
-    markBatchDeviceDone(batchState.currentSN);
-  }
-
-  // Reset test
-  currentStep = 0;
-  stepData = {};
-
-  // Refresh
-  renderRecordsTable();
-  renderStep();
-
-  // Flash effect on records
-  var recDiv = document.getElementById("testRecords");
-  recDiv.style.background = "#e8f5e9";
-  setTimeout(function() { recDiv.style.background = ""; }, 1000);
 }
 
 // Render records table
