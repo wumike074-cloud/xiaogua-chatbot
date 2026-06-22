@@ -6509,9 +6509,22 @@ testStepsConfig["Z1"] = [
   { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
 ];
 testStepsConfig["Z1 lite"] = testStepsConfig["Z1"];
-testStepsConfig["Orion one"] = testStepsConfig["Z1"];
-testStepsConfig["Orion one-AR"] = testStepsConfig["Z1"];
-testStepsConfig["Orion one-Laser"] = testStepsConfig["Z1"];
+// Orion one 系列：含设备类型选择，不含 IMEI
+var orionOneSteps = [
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "固件版本", key: "firmware" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
+  { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "select", title: "设备类型", options: ["Orion one","Orion one-laser","Orion one-AR"], key: "deviceType" },
+  { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["Orion one"] = orionOneSteps;
+testStepsConfig["Orion one-AR"] = orionOneSteps;
+testStepsConfig["Orion one-Laser"] = orionOneSteps;
 testStepsConfig["XBase"] = testStepsConfig["X1"];
 testStepsConfig["Horus"] = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
@@ -6580,7 +6593,7 @@ testStepsConfig["Sfaira one"] = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
-  { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
+  { type: "select", title: "设备类型", options: ["Sfaira one Plus","Sfaira one"], key: "deviceType" },
   { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
   { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
   { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
@@ -6590,7 +6603,7 @@ testStepsConfig["Sfaira one plus"] = [
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
   { type: "input", title: "IMU功能检测", placeholder: "IMU检测结果，有问题请备注", key: "imuTest" },
-  { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
+  { type: "select", title: "设备类型", options: ["Sfaira one Plus","Sfaira one"], key: "deviceType" },
   { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
   { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
   { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
@@ -6599,7 +6612,7 @@ testStepsConfig["Sfaira one lite"] = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
-  { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
+  { type: "select", title: "设备类型", options: ["Sfaira one Plus","Sfaira one"], key: "deviceType" },
   { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
   { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
   { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
@@ -7130,7 +7143,7 @@ function detectModelFromSN(sn) {
   if (/^Y1/.test(s)) return "Y1";
   if (/^D/.test(s)) return "SDL2";
   // Numeric-prefix models
-  if (/^1432/.test(s)) return "Sfaira系列";
+  if (/^1432/.test(s)) return "Sfaira one";
   if (/^16/.test(s)) return "SV100系列";
   if (/^17/.test(s)) return "SV100 Dual";
   if (/^18/.test(s)) return "P2系列";
@@ -7483,9 +7496,8 @@ function startBatchDevice(sn) {
     if (model === "X1" || model === "E1" || model === "X1 Lite" || model === "E1 Lite" || model === "X1 Pro" || model === "E1 Pro") {
       if (model !== "X1") { var sel = model; model = "X1"; }
     }
-    if (model === "Sfaira one" || model === "Sfaira One" || model === "Sfaira One Plus" || model === "Sfaira one plus") {
-      model = "SfairaOne";
-    }
+    if (model === "Sfaira One" || model === "Sfaira One Plus") model = "Sfaira one";
+    if (model === "Sfaira one plus") model = "Sfaira one plus";
     if (model === "P2" || model === "P2 Plus") {
       // Keep as-is, already correct
     }
