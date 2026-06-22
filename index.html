@@ -7843,7 +7843,7 @@ function generateQRCode(regCode) {
 var autoSaveServer = null;        // "server" = localhost:8765, "fsa" = File System Access, null = unavailable
 var autoFileHandle = null;
 var autoFileDB = null;
-var AUTO_SAVE_URL = "http://" + window.location.hostname + ":8765";
+var AUTO_SAVE_URL = "//" + window.location.hostname + ":8765";
 
 // ==================== SUPABASE CLOUD SYNC ====================
 var SUPABASE_URL = "https://wqtkyuarvddpyehpjzqe.supabase.co";
