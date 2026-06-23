@@ -7415,7 +7415,13 @@ function renderPendingList() {
   var btnDrawer = document.getElementById("btnPendingDrawer");
   var btnCount = document.getElementById("btnPendingCount");
 
-  var myDevices = _pendingCache;
+  // Sort by order so same-order devices are adjacent for grouping
+  var myDevices = _pendingCache.slice().sort(function(a, b) {
+    var oa = (a.order || "").toLowerCase();
+    var ob = (b.order || "").toLowerCase();
+    if (oa !== ob) return oa < ob ? -1 : 1;
+    return (a.sn || "").localeCompare(b.sn || "");
+  });
   var untested = myDevices.filter(function(d) { return !d.tested; }).length;
 
   if (myDevices.length === 0) {
