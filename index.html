@@ -788,7 +788,6 @@ body {
 <script src="sn_db_full.js"></script>
 <script src="order_db.js"></script>
 <script src="fw_db.js?v=20260618"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 // ==================== KNOWLEDGE BASE ====================
 // Add your Q&A pairs here. Each entry:
@@ -7069,7 +7068,7 @@ function goToStep(idx) {
 var batchState = { currentSN: null };
 var _ocrBusy = false;
 
-function handleImageUpload(fileInput, textareaId, btnId) {
+function handleImageUpload(fileInput, textareaId, btnId, mode) {
   var file = fileInput.files[0];
   if (!file) return;
   if (_ocrBusy) return;
@@ -7077,53 +7076,67 @@ function handleImageUpload(fileInput, textareaId, btnId) {
 
   var textarea = document.getElementById(textareaId);
   var btn = document.getElementById(btnId);
+  var resultEl = mode === "add" ? document.getElementById("addDeviceResult") : document.getElementById("batchParseResult");
   var btnText = btn ? btn.textContent : "";
   if (btn) { btn.textContent = "⏳ 识别中..."; btn.classList.add("loading"); }
 
-  if (typeof Tesseract === "undefined") {
-    if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
-    alert("OCR 库未加载完成，请刷新页面后重试");
-    _ocrBusy = false;
-    return;
-  }
-
+  // Compress large images before upload
   var img = new Image();
   img.onload = function() {
-    // Scale up 2x for better resolution, no other preprocessing
+    var MAX = 2048;
+    var w = img.width, h = img.height;
+    if (w > MAX || h > MAX) {
+      var ratio = Math.min(MAX / w, MAX / h);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
     var canvas = document.createElement("canvas");
-    canvas.width = img.width * 2;
-    canvas.height = img.height * 2;
+    canvas.width = w;
+    canvas.height = h;
     var ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, w, h);
     URL.revokeObjectURL(img.src);
 
-    Tesseract.recognize(canvas, "eng", {
-      logger: function(m) {
-        if (m.status === "recognizing text" && btn) {
-          var pct = Math.round(m.progress * 100);
-          btn.textContent = "⏳ 识别中 " + pct + "%";
-        }
-      }
-    }).then(function(result) {
-      var text = result.data.text;
+    var base64 = canvas.toDataURL("image/jpeg", 0.85);
+
+    fetch(SUPABASE_URL + "/functions/v1/ocr-baidu", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + SUPABASE_KEY
+      },
+      body: JSON.stringify({ image: base64 })
+    }).then(function(res) {
+      return res.json().then(function(data) {
+        if (!res.ok) throw new Error(data.error + (data.detail ? ": " + data.detail : ""));
+        return data;
+      });
+    }).then(function(data) {
       if (textarea) {
         var old = textarea.value;
-        textarea.value = old ? old + "\n" + text : text;
+        textarea.value = old ? old + "\n" + data.text : data.text;
         textarea.focus();
       }
       if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
       fileInput.value = "";
       _ocrBusy = false;
+
+      // Auto-parse
+      if (mode === "add") {
+        addDevicesFromDialog();
+      } else {
+        parseAndRender();
+      }
     }).catch(function(err) {
       if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
       fileInput.value = "";
-      alert("识别失败: " + (err.message || err));
+      if (resultEl) { resultEl.textContent = "识别失败: " + (err.message || err); resultEl.className = "batch-parse-result warn"; }
       _ocrBusy = false;
     });
   };
   img.onerror = function() {
     if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
-    alert("图片加载失败");
+    if (resultEl) { resultEl.textContent = "图片加载失败"; resultEl.className = "batch-parse-result warn"; }
     _ocrBusy = false;
   };
   img.src = URL.createObjectURL(file);
@@ -8106,7 +8119,7 @@ function exportRecords() {
     </div>
     <textarea class="batch-textarea" id="batchTextarea"></textarea>
     <div class="batch-btn-row">
-      <input type="file" id="batchFileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this, 'batchTextarea', 'batchUploadBtn')">
+      <input type="file" id="batchFileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this, 'batchTextarea', 'batchUploadBtn', 'parse')">
       <button class="batch-upload-btn" id="batchUploadBtn" onclick="document.getElementById('batchFileInput').click()">📷 上传图片识别</button>
       <button class="batch-parse-btn" onclick="parseAndRender()">解析</button>
     </div>
@@ -8123,7 +8136,7 @@ function exportRecords() {
     </div>
     <textarea class="batch-textarea" id="addDeviceTextarea"></textarea>
     <div class="batch-btn-row">
-      <input type="file" id="addDeviceFileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this, 'addDeviceTextarea', 'addDeviceUploadBtn')">
+      <input type="file" id="addDeviceFileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this, 'addDeviceTextarea', 'addDeviceUploadBtn', 'add')">
       <button class="batch-upload-btn" id="addDeviceUploadBtn" onclick="document.getElementById('addDeviceFileInput').click()">📷 上传图片识别</button>
       <button class="batch-parse-btn" onclick="addDevicesFromDialog()">添加</button>
     </div>
