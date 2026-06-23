@@ -649,6 +649,9 @@ body {
 .batch-parse-btn { flex: 1; padding: 12px 32px; background: var(--accent); color: #fff; border: none; border-radius: 20px; font-size: 14px; cursor: pointer; font-weight: 600; letter-spacing: 0.5px; transition: all 0.2s; }
 .batch-btn-add { flex: 1; padding: 10px 0; background: #07a85c; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
 .batch-parse-btn:hover, .batch-btn-add:hover { opacity: 0.9; }
+.batch-upload-btn { flex: 1; padding: 10px 16px; background: #fff; color: var(--accent); border: 2px dashed var(--border); border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.batch-upload-btn:hover { border-color: var(--accent); background: #f0f4ff; }
+.batch-upload-btn.loading { opacity: 0.5; pointer-events: none; }
 .batch-parse-result { font-size: 13px; margin-top: 8px; text-align: center; }
 .batch-parse-result.ok { color: #4caf50; font-weight: 600; }
 .batch-parse-result.warn { color: #e67e22; }
@@ -785,6 +788,7 @@ body {
 <script src="sn_db_full.js"></script>
 <script src="order_db.js"></script>
 <script src="fw_db.js?v=20260618"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 // ==================== KNOWLEDGE BASE ====================
 // Add your Q&A pairs here. Each entry:
@@ -7063,6 +7067,50 @@ function goToStep(idx) {
 
 // ==================== BATCH TEST IMPORT ====================
 var batchState = { currentSN: null };
+var _ocrBusy = false;
+
+function handleImageUpload(fileInput, textareaId, btnId) {
+  var file = fileInput.files[0];
+  if (!file) return;
+  if (_ocrBusy) return;
+  _ocrBusy = true;
+
+  var textarea = document.getElementById(textareaId);
+  var btn = document.getElementById(btnId);
+  var btnText = btn ? btn.textContent : "";
+  if (btn) { btn.textContent = "⏳ 识别中..."; btn.classList.add("loading"); }
+
+  if (typeof Tesseract === "undefined") {
+    if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
+    alert("OCR 库未加载完成，请刷新页面后重试");
+    _ocrBusy = false;
+    return;
+  }
+
+  Tesseract.recognize(file, "eng", {
+    logger: function(m) {
+      if (m.status === "recognizing text" && btn) {
+        var pct = Math.round(m.progress * 100);
+        btn.textContent = "⏳ 识别中 " + pct + "%";
+      }
+    }
+  }).then(function(result) {
+    var text = result.data.text;
+    if (textarea) {
+      var old = textarea.value;
+      textarea.value = old ? old + "\n" + text : text;
+      textarea.focus();
+    }
+    if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
+    fileInput.value = "";
+    _ocrBusy = false;
+  }).catch(function(err) {
+    if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
+    fileInput.value = "";
+    alert("识别失败: " + (err.message || err));
+    _ocrBusy = false;
+  });
+}
 
 
 function openBatchDialog() {
@@ -8040,7 +8088,11 @@ function exportRecords() {
       <button onclick="closeBatchDialog()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">&times;</button>
     </div>
     <textarea class="batch-textarea" id="batchTextarea"></textarea>
-    <button class="batch-parse-btn" onclick="parseAndRender()">解析</button>
+    <div class="batch-btn-row">
+      <input type="file" id="batchFileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this, 'batchTextarea', 'batchUploadBtn')">
+      <button class="batch-upload-btn" id="batchUploadBtn" onclick="document.getElementById('batchFileInput').click()">📷 上传图片识别</button>
+      <button class="batch-parse-btn" onclick="parseAndRender()">解析</button>
+    </div>
     <div class="batch-parse-result" id="batchParseResult"></div>
   </div>
 </div>
@@ -8053,7 +8105,11 @@ function exportRecords() {
       <button onclick="closeAddDeviceDialog()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">&times;</button>
     </div>
     <textarea class="batch-textarea" id="addDeviceTextarea"></textarea>
-    <button class="batch-parse-btn" onclick="addDevicesFromDialog()">添加</button>
+    <div class="batch-btn-row">
+      <input type="file" id="addDeviceFileInput" accept="image/*" style="display:none" onchange="handleImageUpload(this, 'addDeviceTextarea', 'addDeviceUploadBtn')">
+      <button class="batch-upload-btn" id="addDeviceUploadBtn" onclick="document.getElementById('addDeviceFileInput').click()">📷 上传图片识别</button>
+      <button class="batch-parse-btn" onclick="addDevicesFromDialog()">添加</button>
+    </div>
     <div class="batch-parse-result" id="addDeviceResult"></div>
   </div>
 </div>
