@@ -7259,6 +7259,18 @@ function parseBatchInput(text) {
       continue;
     }
 
+    // Also detect order numbers embedded mid-line (e.g. "BHCH IT, XYZCOLTES2602")
+    var ordEmbed = line.match(/\b(xyz[a-z]{2,}\d+)\b/i) || line.match(/\b(sxh[a-z0-9]+)\b/i);
+    if (ordEmbed) {
+      var embOrder = ordEmbed[1].toUpperCase();
+      currentOrder = embOrder;
+      var embFound = false;
+      for (var oe = 0; oe < orders.length; oe++) {
+        if (orders[oe].orderNumber === embOrder) { embFound = true; break; }
+      }
+      if (!embFound) orders.push({ orderNumber: embOrder, devices: [] });
+    }
+
     
     // ── Tabular format: tab-separated or multi-space columns ──
     // e.g. "2026-06-17 17:33:48    6126A0003    default    20260913    <64-hex-reg-code>"
