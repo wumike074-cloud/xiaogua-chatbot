@@ -6843,8 +6843,9 @@ function renderStep() {
     html += '<div id="snHint" style="margin-top:8px;font-size:12px;color:var(--text-secondary);"></div>';
   }
 
-  // Registration code display + QR for registration step
-  if (step.key === "registration") {
+  // Registration code display + QR for registration step (also for SC series on importantInfo step)
+  var _isSC = currentProduct && /^SC/i.test(currentProduct);
+  if (step.key === "registration" || (step.key === "importantInfo" && _isSC)) {
     var regCode = stepData["regCode"] || "";
     var sn = stepData["sn"] || "";
     if (regCode) {
@@ -6902,8 +6903,8 @@ function renderStep() {
     });
   }
 
-  // Generate QR code if on registration step with a reg code
-  if (step.key === "registration") {
+  // Generate QR code if on registration step (or SC importantInfo) with a reg code
+  if (step.key === "registration" || (step.key === "importantInfo" && _isSC)) {
     var qrCode = stepData["regCode"] || "";
     if (qrCode) {
       generateQRCode(qrCode).then(function(url) {
@@ -7193,7 +7194,7 @@ function parseBatchInput(text) {
         var token = parts[ci].trim();
         if (!token) continue;
         // SN: alphanumeric, 6-20 chars
-        if (/^[A-Za-z0-9]{6,20}$/.test(token) && !/^[A-Fa-f0-9]{64}$/.test(token) && !/^default$/i.test(token) && !/^\d{8}$/.test(token)) {
+        if (/^[A-Za-z0-9]{6,20}$/.test(token) && !/^[A-Fa-f0-9]{64}$/.test(token) && !/^default$/i.test(token) && !/^\d{8}$/.test(token) && !/^bf/i.test(token)) {
           if (seenSNs[token]) {
             warnings.push("重复SN已跳过: " + token);
             continue;
@@ -7203,7 +7204,7 @@ function parseBatchInput(text) {
           // Look for registration code nearby (64 hex chars)
           var reg = "";
           for (var cj = 0; cj < parts.length; cj++) {
-            if (cj !== ci && /^[A-Fa-f0-9]{64}$/.test(parts[cj].trim())) {
+            if (cj !== ci && (/^[A-Fa-f0-9]{64}$/.test(parts[cj].trim()) || /^bf/i.test(parts[cj].trim()))) {
               reg = parts[cj].trim().toUpperCase();
               break;
             }
@@ -7257,12 +7258,12 @@ function parseBatchInput(text) {
 
 
 		// SN: alphanumeric, 6-20 chars
-    if (/^[A-Za-z0-9]{6,20}$/.test(line)) {
+    if (/^[A-Za-z0-9]{6,20}$/.test(line) && !/^bf/i.test(line)) {
       var regCode = "";
       for (var j = i + 1; j < lines.length; j++) {
         var nextLine = lines[j].trim();
         if (!nextLine) continue;
-        if (/^[A-Fa-f0-9]{64}$/.test(nextLine)) {
+        if (/^[A-Fa-f0-9]{64}$/.test(nextLine) || /^bf/i.test(nextLine)) {
           regCode = nextLine.toUpperCase();
         }
         break;
