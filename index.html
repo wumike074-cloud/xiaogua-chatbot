@@ -7321,7 +7321,7 @@ function parseBatchInput(text) {
           }
           if (!m) m = detectModelFromSN(token);
 
-          var fo = ord || od || currentOrder;
+          var fo = ord || currentOrder || od;
 
           var dev = {
             sn: token,
@@ -7380,7 +7380,7 @@ function parseBatchInput(text) {
       // SN prefix model detection fallback
       if (!model) model = detectModelFromSN(sn);
 
-      var finalOrder = orderFromDB || currentOrder;
+      var finalOrder = currentOrder || orderFromDB;
 
       var device = {
         sn: sn,
