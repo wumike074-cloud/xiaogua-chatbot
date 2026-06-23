@@ -6468,7 +6468,7 @@ const ALL_PRODUCTS = [
   "H1","Horus","XBase","P2","P2 Plus",
   "Sfaira one","Sfaira one plus","Sfaira one lite",
   "S20","SAgro200","SAgro150","SAgro100","SAgro10","SAgro180",
-  "SDL2","DL","SL100","SP100",
+  "AL15","SDL2","DL","SL100","SP100",
   "SC260","SC200","SC300","SC280","SC60",
   "SV100","SV100 Dual","SV100 INS","SV100 INS-D"
 ];
@@ -6637,6 +6637,17 @@ testStepsConfig["SC200"] = scSteps;
 testStepsConfig["SC300"] = scSteps;
 testStepsConfig["SC280"] = scSteps;
 testStepsConfig["SC60"] = scSteps;
+
+var alSteps = [
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" }
+];
+testStepsConfig["AL15"] = alSteps;
+testStepsConfig["SDL2"] = alSteps;
+testStepsConfig["DL"] = alSteps;
 
 testStepsConfig["S20"] = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
