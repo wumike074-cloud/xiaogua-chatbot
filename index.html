@@ -6622,7 +6622,6 @@ var scSteps = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
   { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
-  { type: "input", title: "软件安装", placeholder: "请输入注册码", key: "importantInfo" },
   { type: "select", title: "注册期限", options: ["永久","不注册","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
   { type: "input", title: "罗盘检查", placeholder: "罗盘检查结果，有问题请备注", key: "compassTest" },
   { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
@@ -6843,9 +6842,8 @@ function renderStep() {
     html += '<div id="snHint" style="margin-top:8px;font-size:12px;color:var(--text-secondary);"></div>';
   }
 
-  // Registration code display + QR for registration step (also for SC series on importantInfo step)
-  var _isSC = currentProduct && /^SC/i.test(currentProduct);
-  if (step.key === "registration" || (step.key === "importantInfo" && _isSC)) {
+  // Registration code display + QR for registration step
+  if (step.key === "registration") {
     var regCode = stepData["regCode"] || "";
     var sn = stepData["sn"] || "";
     if (regCode) {
@@ -6903,8 +6901,8 @@ function renderStep() {
     });
   }
 
-  // Generate QR code if on registration step (or SC importantInfo) with a reg code
-  if (step.key === "registration" || (step.key === "importantInfo" && _isSC)) {
+  // Generate QR code if on registration step with a reg code
+  if (step.key === "registration") {
     var qrCode = stepData["regCode"] || "";
     if (qrCode) {
       generateQRCode(qrCode).then(function(url) {
