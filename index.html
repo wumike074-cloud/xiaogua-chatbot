@@ -7137,6 +7137,7 @@ function handleImageUpload(fileInput, textareaId, btnId, mode) {
   img.onerror = function() {
     if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
     if (resultEl) { resultEl.textContent = "图片加载失败"; resultEl.className = "batch-parse-result warn"; }
+    URL.revokeObjectURL(img.src);
     _ocrBusy = false;
   };
   img.src = URL.createObjectURL(file);
@@ -7250,7 +7251,9 @@ function parseBatchInput(text) {
 
     // Order number: starts with XYZ, SXH, or SXHB (case-insensitive)
     if (/^xyz/i.test(line) || /^sxh/i.test(line)) {
-      currentOrder = line.toUpperCase();
+      // Extract just the order token (e.g. "XYZCOLTES2602" from "XYZCOLTES2602 some text")
+      var tok = line.split(/\s+/)[0];
+      currentOrder = tok.toUpperCase();
       var found = false;
       for (var o = 0; o < orders.length; o++) {
         if (orders[o].orderNumber === currentOrder) { found = true; break; }
@@ -7260,7 +7263,7 @@ function parseBatchInput(text) {
     }
 
     // Also detect order numbers embedded mid-line (e.g. "BHCH IT, XYZCOLTES2602")
-    var ordEmbed = line.match(/\b(xyz[a-z]{2,}\d+)\b/i) || line.match(/\b(sxh[a-z0-9]+)\b/i);
+    var ordEmbed = line.match(/\b(xyz[a-z0-9]{3,})\b/i) || line.match(/\b(sxh[a-z0-9]{2,})\b/i);
     if (ordEmbed) {
       var embOrder = ordEmbed[1].toUpperCase();
       currentOrder = embOrder;
