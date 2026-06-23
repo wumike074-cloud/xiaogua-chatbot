@@ -7069,62 +7069,6 @@ function goToStep(idx) {
 var batchState = { currentSN: null };
 var _ocrBusy = false;
 
-function preprocessForOCR(file) {
-  return new Promise(function(resolve, reject) {
-    var img = new Image();
-    img.onload = function() {
-      var scale = 2.5;
-      var w = img.width * scale;
-      var h = img.height * scale;
-      var canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      var ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, w, h);
-
-      var imageData = ctx.getImageData(0, 0, w, h);
-      var data = imageData.data;
-
-      // Grayscale
-      for (var i = 0; i < data.length; i += 4) {
-        var g = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        data[i] = data[i + 1] = data[i + 2] = g;
-      }
-
-      // Otsu-like adaptive threshold: separate foreground (dark text) from background
-      var hist = new Array(256).fill(0);
-      for (var j = 0; j < data.length; j += 4) hist[data[j]]++;
-      var total = (data.length / 4);
-      var sumB = 0, wB = 0, maxVar = 0, thr = 128;
-      var sum = 0;
-      for (var k = 0; k < 256; k++) sum += k * hist[k];
-      for (var t = 0; t < 256; t++) {
-        wB += hist[t];
-        if (wB === 0) continue;
-        var wF = total - wB;
-        if (wF === 0) break;
-        sumB += t * hist[t];
-        var mB = sumB / wB;
-        var mF = (sum - sumB) / wF;
-        var between = wB * wF * (mB - mF) * (mB - mF);
-        if (between > maxVar) { maxVar = between; thr = t; }
-      }
-
-      // Binarize: dark text (below threshold) → black, light bg → white
-      for (var p = 0; p < data.length; p += 4) {
-        var v = data[p] < thr ? 0 : 255;
-        data[p] = data[p + 1] = data[p + 2] = v;
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-      URL.revokeObjectURL(img.src);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = function() { reject(new Error("Image load failed")); };
-    img.src = URL.createObjectURL(file);
-  });
-}
-
 function handleImageUpload(fileInput, textareaId, btnId) {
   var file = fileInput.files[0];
   if (!file) return;
@@ -7134,7 +7078,7 @@ function handleImageUpload(fileInput, textareaId, btnId) {
   var textarea = document.getElementById(textareaId);
   var btn = document.getElementById(btnId);
   var btnText = btn ? btn.textContent : "";
-  if (btn) { btn.textContent = "⏳ 预处理中..."; btn.classList.add("loading"); }
+  if (btn) { btn.textContent = "⏳ 识别中..."; btn.classList.add("loading"); }
 
   if (typeof Tesseract === "undefined") {
     if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
@@ -7143,34 +7087,46 @@ function handleImageUpload(fileInput, textareaId, btnId) {
     return;
   }
 
-  preprocessForOCR(file).then(function(dataUrl) {
-    if (btn) btn.textContent = "⏳ 识别中...";
-    return Tesseract.recognize(dataUrl, "eng", {
-      tessedit_pageseg_mode: "6",
-      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-()/ :.",
+  var img = new Image();
+  img.onload = function() {
+    // Scale up 2x for better resolution, no other preprocessing
+    var canvas = document.createElement("canvas");
+    canvas.width = img.width * 2;
+    canvas.height = img.height * 2;
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(img.src);
+
+    Tesseract.recognize(canvas, "eng", {
       logger: function(m) {
         if (m.status === "recognizing text" && btn) {
           var pct = Math.round(m.progress * 100);
           btn.textContent = "⏳ 识别中 " + pct + "%";
         }
       }
+    }).then(function(result) {
+      var text = result.data.text;
+      if (textarea) {
+        var old = textarea.value;
+        textarea.value = old ? old + "\n" + text : text;
+        textarea.focus();
+      }
+      if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
+      fileInput.value = "";
+      _ocrBusy = false;
+    }).catch(function(err) {
+      if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
+      fileInput.value = "";
+      alert("识别失败: " + (err.message || err));
+      _ocrBusy = false;
     });
-  }).then(function(result) {
-    var text = result.data.text;
-    if (textarea) {
-      var old = textarea.value;
-      textarea.value = old ? old + "\n" + text : text;
-      textarea.focus();
-    }
+  };
+  img.onerror = function() {
     if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
-    fileInput.value = "";
+    alert("图片加载失败");
     _ocrBusy = false;
-  }).catch(function(err) {
-    if (btn) { btn.textContent = btnText; btn.classList.remove("loading"); }
-    fileInput.value = "";
-    alert("识别失败: " + (err.message || err));
-    _ocrBusy = false;
-  });
+  };
+  img.src = URL.createObjectURL(file);
 }
 
 
