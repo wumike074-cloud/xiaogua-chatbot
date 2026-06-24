@@ -4708,6 +4708,7 @@ let currentLang = "zh";
 function init() {
   autoResizeTextarea();
   document.addEventListener("DOMContentLoaded", function() {
+    syncTestRecordsIndex();
     refreshPendingList();
     refreshRecordsTable();
   });
@@ -4997,6 +4998,16 @@ function renderSNResult(results) {
 
     html += '<div style="margin-top:8px;font-size:11px;color:#999">SN: ' + escapeHtml(r.sn) + '</div>';
     html += '</div>';
+    // Append test record info if available
+    var tri = _testRecordsIndex[r.sn];
+    if (tri) {
+      html += '<div style="margin-top:6px;padding:6px 8px;background:#e8f5e9;border-radius:6px;font-size:11px;color:#2e7d32">已测试';
+      if (tri.tester) html += ' | 测试人: ' + escapeHtml(tri.tester);
+      if (tri.firmware) html += ' | 固件: ' + escapeHtml(tri.firmware);
+      if (tri.registration) html += ' | 注册: ' + escapeHtml(tri.registration);
+      if (tri.date) html += ' | ' + escapeHtml(tri.date);
+      html += '</div>';
+    }
     addMessage("bot", html, { confidence: 100, entryId: "sn_" + r.sn, raw: true });
   } else {
     let html = '<div style="font-size:13px;line-height:1.8"><strong>找到 ' + results.length + ' 个SN:</strong><br><br>';
@@ -5012,6 +5023,14 @@ function renderSNResult(results) {
       if (device) html += ' &nbsp;|&nbsp; ' + escapeHtml(device);
       if (country) html += ' &nbsp;|&nbsp; ' + escapeHtml(country);
       if (date) html += ' &nbsp;|&nbsp; ' + escapeHtml(date);
+      var tri = _testRecordsIndex[r.sn];
+      if (tri) {
+        html += ' <span style="color:#2e7d32;font-size:11px">| 已测试';
+        if (tri.tester) html += ' | 测试人: ' + escapeHtml(tri.tester);
+        if (tri.firmware) html += ' | 固件: ' + escapeHtml(tri.firmware);
+        if (tri.date) html += ' | ' + escapeHtml(tri.date);
+        html += '</span>';
+      }
       html += '</div>';
     });
     html += '</div>';
@@ -7759,6 +7778,57 @@ var SUPABASE_KEY = "sb_publishable_xbZNH82SqHbLqbbF34mSTQ_NLoAFO-j";
 // ==================== CLOUD DATA LAYER v2 ====================
 var _pendingCache = [];
 var _recordsCache = [];
+var _testRecordsIndex = {};
+
+function syncTestRecordsIndex() {
+  var CACHE_KEY = "testRecordsIndex";
+  var CACHE_TIME_KEY = "testRecordsIndexTime";
+  var DAY_MS = 86400000;
+  var cached = localStorage.getItem(CACHE_KEY);
+  var cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+  var now = Date.now();
+  if (cached && cachedTime && (now - parseInt(cachedTime, 10)) < DAY_MS) {
+    try { _testRecordsIndex = JSON.parse(cached); } catch(e) { _testRecordsIndex = {}; }
+    return Promise.resolve();
+  }
+  var sb = getSupabase();
+  if (!sb) return Promise.resolve();
+  return loadAllTestRecords(sb).then(function(records) {
+    var idx = {};
+    records.forEach(function(r) {
+      if (r.sn) idx[r.sn] = { order: r.order || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
+    });
+    _testRecordsIndex = idx;
+    localStorage.setItem(CACHE_KEY, JSON.stringify(idx));
+    localStorage.setItem(CACHE_TIME_KEY, String(now));
+  }).catch(function() {});
+}
+
+function loadAllTestRecords(sb) {
+  var BATCH = 1000;
+  var allRows = [];
+  function fetchBatch(start) {
+    return sb.from("test_records_v2")
+      .select("sn,order_no,firmware,tester,test_data,tested_at")
+      .order("tested_at", { ascending: false })
+      .range(start, start + BATCH - 1)
+      .then(function(r) {
+        if (r.error) return [];
+        (r.data || []).forEach(function(row) {
+          allRows.push({
+            sn: row.sn, order: row.order_no || "",
+            firmware: row.firmware || "",
+            tester: row.tester || "",
+            registration: (row.test_data && row.test_data.registration) || "",
+            date: row.tested_at ? row.tested_at.split("T")[0] : ""
+          });
+        });
+        if ((r.data || []).length === BATCH) return fetchBatch(start + BATCH);
+        return allRows;
+      });
+  }
+  return fetchBatch(0);
+}
 
 function loadPendingDevices() {
   var sb = getSupabase();
