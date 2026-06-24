@@ -4922,7 +4922,7 @@ function lookupSN(sn) {
   // Fallback: check test records index for recently tested devices
   var tri = _testRecordsIndex[sn.toUpperCase()];
   if (tri) {
-    return { sn: sn.toUpperCase(), info: [tri.order || "", "", tri.country || "", tri.date || ""] };
+    return { sn: sn.toUpperCase(), info: [tri.order || "", tri.model || "", tri.country || "", tri.date || ""] };
   }
   return null;
 }
@@ -7771,17 +7771,19 @@ var _testRecordsIndex = {};
 
 function syncTestRecordsIndex() {
   // Always refresh on page load; also try localStorage cache first for instant display
-  var CACHE_KEY = "testRecordsIndex";
+  var CACHE_KEY = "testRecordsIndex_v2";
   var cached = localStorage.getItem(CACHE_KEY);
   if (cached) {
     try { _testRecordsIndex = JSON.parse(cached); } catch(e) { _testRecordsIndex = {}; }
   }
+  // Clean up old unversioned cache
+  try { localStorage.removeItem("testRecordsIndex"); } catch(e) {}
   var sb = getSupabase();
   if (!sb) return Promise.resolve();
   return loadAllTestRecords(sb).then(function(records) {
     var idx = {};
     records.forEach(function(r) {
-      if (r.sn) idx[r.sn.toUpperCase()] = { order: r.order || "", country: r.country || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
+      if (r.sn) idx[r.sn.toUpperCase()] = { order: r.order || "", country: r.country || "", model: r.model || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
     });
     _testRecordsIndex = idx;
     localStorage.setItem(CACHE_KEY, JSON.stringify(idx));
@@ -7796,7 +7798,7 @@ function loadAllTestRecords(sb) {
   var allRows = [];
   function fetchBatch(start) {
     return sb.from("test_records_v2")
-      .select("sn,order_no,country,firmware,tester,test_data,tested_at")
+      .select("sn,order_no,country,model,firmware,tester,test_data,tested_at")
       .order("tested_at", { ascending: false })
       .range(start, start + BATCH - 1)
       .then(function(r) {
@@ -7805,6 +7807,7 @@ function loadAllTestRecords(sb) {
           allRows.push({
             sn: row.sn, order: row.order_no || "",
             country: row.country || "",
+            model: row.model || "",
             firmware: row.firmware || "",
             tester: row.tester || "",
             registration: (row.test_data && row.test_data.registration) || "",
