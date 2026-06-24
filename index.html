@@ -8035,7 +8035,7 @@ function finishTest() {
     })(),
     regCode: stepData["regCode"] || "",
     testContent: stepData["testContent"] || stepTitles,
-    importantInfo: stepData["importantInfo"] || stepData["imuReg"] || stepData["padSN"] || "",
+    importantInfo: stepData["importantInfo"] || stepData["imuReg"] || stepData["padSN"] || stepData["regCode"] || "",
     remark1: [stepData["imei"], stepData["remark1"]].filter(Boolean).join("; "),
     remark2: stepData["remark2"] || "",
     result: hasFail ? "fail" : "pass",
