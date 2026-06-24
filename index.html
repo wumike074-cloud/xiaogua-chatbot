@@ -8025,7 +8025,11 @@ function finishTest() {
     tester: stepData["tester"] || "",
     model: stepData["deviceType"] || currentProduct,
     sn: stepData["sn"] || "",
-    firmware: buildFirmwareStr(stepData),
+    firmware: (function() {
+      var m = stepData["deviceType"] || currentProduct;
+      if (/^SC/.test(m) && stepData["regCode"]) return stepData["regCode"];
+      return buildFirmwareStr(stepData);
+    })(),
     registration: (function() {
       var reg = stepData["registration"] || "";
       if (reg === "自定义" || reg === "自定义期限") {
@@ -8035,7 +8039,7 @@ function finishTest() {
     })(),
     regCode: stepData["regCode"] || "",
     testContent: stepData["testContent"] || stepTitles,
-    importantInfo: stepData["importantInfo"] || stepData["imuReg"] || stepData["padSN"] || stepData["regCode"] || "",
+    importantInfo: stepData["importantInfo"] || stepData["imuReg"] || stepData["padSN"] || "",
     remark1: [stepData["imei"], stepData["remark1"]].filter(Boolean).join("; "),
     remark2: stepData["remark2"] || "",
     result: hasFail ? "fail" : "pass",
