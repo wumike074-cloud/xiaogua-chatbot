@@ -7781,15 +7781,11 @@ var _recordsCache = [];
 var _testRecordsIndex = {};
 
 function syncTestRecordsIndex() {
+  // Always refresh on page load; also try localStorage cache first for instant display
   var CACHE_KEY = "testRecordsIndex";
-  var CACHE_TIME_KEY = "testRecordsIndexTime";
-  var DAY_MS = 86400000;
   var cached = localStorage.getItem(CACHE_KEY);
-  var cachedTime = localStorage.getItem(CACHE_TIME_KEY);
-  var now = Date.now();
-  if (cached && cachedTime && (now - parseInt(cachedTime, 10)) < DAY_MS) {
+  if (cached) {
     try { _testRecordsIndex = JSON.parse(cached); } catch(e) { _testRecordsIndex = {}; }
-    return Promise.resolve();
   }
   var sb = getSupabase();
   if (!sb) return Promise.resolve();
@@ -7800,7 +7796,6 @@ function syncTestRecordsIndex() {
     });
     _testRecordsIndex = idx;
     localStorage.setItem(CACHE_KEY, JSON.stringify(idx));
-    localStorage.setItem(CACHE_TIME_KEY, String(now));
   }).catch(function() {});
 }
 
