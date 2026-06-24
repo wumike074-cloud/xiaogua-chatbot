@@ -6479,6 +6479,79 @@ var testStepsConfig = {};
 ALL_PRODUCTS.forEach(function(p) { testStepsConfig[p] = []; });
 
 // Example: X1 has steps
+// ===== Series configs (with device type selection) =====
+var x1SeriesSteps = [
+  { type: "select", title: "设备类型", options: ["X1","X1 lite","X1 Pro","E1","E1 Pro"], key: "deviceType" },
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "固件版本", key: "firmware" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
+  { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
+  { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
+  { type: "input", title: "IMEI号", placeholder: "输入IMEI号，无需记录则留空", key: "imei" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["X1系列"] = x1SeriesSteps;
+
+var z1SeriesSteps = [
+  { type: "select", title: "设备类型", options: ["Z1","Z1 lite"], key: "deviceType" },
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "固件版本", key: "firmware" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
+  { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
+  { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["Z1系列"] = z1SeriesSteps;
+
+var orionSeriesSteps = [
+  { type: "select", title: "设备类型", options: ["Orion one","Orion one-Laser","Orion one-AR"], key: "deviceType" },
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "固件版本", key: "firmware" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
+  { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["Orion one系列"] = orionSeriesSteps;
+
+var sfairaSeriesSteps = [
+  { type: "select", title: "设备类型", options: ["Sfaira one","Sfaira one Plus"], key: "deviceType" },
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["Sfaira one系列"] = sfairaSeriesSteps;
+
+var sv100SeriesSteps = [
+  { type: "select", title: "设备类型", options: ["SV100","SV100 Dual","SV100 INS"], key: "deviceType" },
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "固件版本", key: "firmware" },
+  { type: "input", title: "其他固件版本", placeholder: "", key: "otherVersion" },
+  { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "input", title: "充电测试", placeholder: "充电测试结果，有问题请备注", key: "chargeTest" },
+  { type: "input", title: "外观检测", placeholder: "外观检查结果，有问题请备注", key: "appearance" },
+  { type: "input", title: "IMEI号", placeholder: "输入IMEI号，无需记录则留空", key: "imei" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["SV100系列"] = sv100SeriesSteps;
+
 testStepsConfig["X1"] = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
   { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
@@ -7232,17 +7305,18 @@ function detectModelFromSN(sn) {
   if (/^Y1/.test(s)) return "Y1";
   if (/^D/.test(s)) return "SDL2";
   // Numeric-prefix models
-  if (/^1432/.test(s)) return "Sfaira one";
+  if (/^1432/.test(s)) return "Sfaira one系列";
   if (/^16/.test(s)) return "SV100系列";
-  if (/^17/.test(s)) return "SV100 Dual";
+  if (/^17/.test(s)) return "SV100系列";
   if (/^18/.test(s)) return "P2系列";
-  if (/^21/.test(s)) return "X1系列/E1";
+  if (/^21/.test(s)) return "X1系列";
   if (/^22/.test(s)) return "E1 lite";
-  if (/^31/.test(s)) return "Orion one";
+  if (/^31/.test(s)) return "Orion one系列";
   if (/^41/.test(s)) return "S20";
-  if (/^51/.test(s)) return "Z1";
+  if (/^51/.test(s)) return "Z1系列";
   if (/^61/.test(s)) return "Horus";
   if (/^71/.test(s)) return "XBase";
+  if (/^743/.test(s)) return "Sfaira one系列";
   return "";
 }
 
@@ -7601,23 +7675,21 @@ function startBatchDevice(sn) {
   var proceed = function(device) {
     batchState.currentSN = sn;
     var model = device.model;
-    // Model disambiguation (same as before)
+    // Model disambiguation — map individual models to their series config
     if (model === "X1" || model === "E1" || model === "X1 Lite" || model === "E1 Lite" || model === "X1 Pro" || model === "E1 Pro") {
-      if (model !== "X1") { var sel = model; model = "X1"; }
+      model = "X1系列";
+    } else if (model === "Z1" || model === "Z1 Lite") {
+      model = "Z1系列";
+    } else if (model === "Orion one" || model === "Orion one-Laser" || model === "Orion one-AR" || model === "Orion one-laser") {
+      model = "Orion one系列";
+    } else if (model === "Sfaira One" || model === "Sfaira One Plus" || model === "Sfaira one" || model === "Sfaira one plus" || model === "Sfaira one lite") {
+      model = "Sfaira one系列";
+    } else if (model === "SV100" || model === "SV100 Dual" || model === "SV100 INS" || model === "SV100 INS-D" || model === "SV100-INS" || model === "SV100-INS-Dual") {
+      model = "SV100系列";
+    } else if (model === "P2" || model === "P2 Plus") {
+      // Keep as-is
     }
-    if (model === "Sfaira One" || model === "Sfaira One Plus") model = "Sfaira one";
-    if (model === "Sfaira one plus") model = "Sfaira one plus";
-    if (model === "P2" || model === "P2 Plus") {
-      // Keep as-is, already correct
-    }
-    if (model === "SV100" || model === "SV100 Dual" || model === "SV100 INS" || model === "SV100 INS-D" || model === "SV100-INS" || model === "SV100-INS-Dual") {
-      if (model.indexOf("INS") >= 0) {
-        if (model.indexOf("Dual") >= 0) model = "SV100 INS-D";
-        else model = "SV100 INS";
-      } else if (model.indexOf("Dual") >= 0) model = "SV100 Dual";
-      else model = "SV100";
-    }
-    if (!testStepsConfig[model]) model = "X1";
+    if (!testStepsConfig[model]) model = "X1系列";
 
     switchTab("test");
     selectProduct(model, {
@@ -7944,7 +8016,7 @@ function finishTest() {
     country: stepData["country"] || "",
     order: stepData["order"] || "",
     tester: stepData["tester"] || "",
-    model: currentProduct,
+    model: stepData["deviceType"] || currentProduct,
     sn: stepData["sn"] || "",
     firmware: buildFirmwareStr(stepData),
     registration: (function() {
