@@ -4922,7 +4922,7 @@ function lookupSN(sn) {
   // Fallback: check test records index for recently tested devices
   var tri = _testRecordsIndex[sn.toUpperCase()];
   if (tri) {
-    return { sn: sn.toUpperCase(), info: [tri.order || "", "", "", tri.date || ""] };
+    return { sn: sn.toUpperCase(), info: [tri.order || "", "", tri.country || "", tri.date || ""] };
   }
   return null;
 }
@@ -7781,7 +7781,7 @@ function syncTestRecordsIndex() {
   return loadAllTestRecords(sb).then(function(records) {
     var idx = {};
     records.forEach(function(r) {
-      if (r.sn) idx[r.sn.toUpperCase()] = { order: r.order || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
+      if (r.sn) idx[r.sn.toUpperCase()] = { order: r.order || "", country: r.country || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
     });
     _testRecordsIndex = idx;
     localStorage.setItem(CACHE_KEY, JSON.stringify(idx));
@@ -7796,7 +7796,7 @@ function loadAllTestRecords(sb) {
   var allRows = [];
   function fetchBatch(start) {
     return sb.from("test_records_v2")
-      .select("sn,order_no,firmware,tester,test_data,tested_at")
+      .select("sn,order_no,country,firmware,tester,test_data,tested_at")
       .order("tested_at", { ascending: false })
       .range(start, start + BATCH - 1)
       .then(function(r) {
@@ -7804,6 +7804,7 @@ function loadAllTestRecords(sb) {
         (r.data || []).forEach(function(row) {
           allRows.push({
             sn: row.sn, order: row.order_no || "",
+            country: row.country || "",
             firmware: row.firmware || "",
             tester: row.tester || "",
             registration: (row.test_data && row.test_data.registration) || "",
