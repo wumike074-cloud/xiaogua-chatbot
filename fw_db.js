@@ -13,11 +13,7 @@ function addFW(products, versions) {
 
 // X1 / X1 lite / E1 group
 addFW(["X1", "X1 lite", "E1"], [
-  "1.0.A19S90",
-  "1.0.A19S7-NOLOGO",
-  "1.0.A19S89-V15-20260410",
-  "1.0.A19S85S",
-  "A19H-NL"
+  "1.0.A19S91"
 ]);
 
 // X1 Pro / E1 Pro group
@@ -30,18 +26,12 @@ addFW(["X1 Pro", "E1 Pro"], [
 
 // Z1
 addFW(["Z1"], [
-  "Z1_V0.4.2.6",
-  "Z1_V4.2.0.5.S1",
-  "Z1_V4.4.0.1",
-  "Z1_V4.4.0.1.N1"
+  "Z1_V4.3.0.5"
 ]);
 
 // Z1 lite — same as Z1
 addFW(["Z1 lite"], [
-  "Z1_V0.4.2.6",
-  "Z1_V4.2.0.5.S1",
-  "Z1_V4.4.0.1",
-  "Z1_V4.4.0.1.N1"
+  "Z1_V4.3.0.5"
 ]);
 
 // E1 lite — same as Z1
