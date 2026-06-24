@@ -8167,9 +8167,8 @@ function renderRecordsTable() {
 
   var html = "";
   var fields = ["date","country","order","tester","model","sn","firmware","registration","importantInfo","remark1","remark2"];
-  var globalIdx = records.length - displayRecords.length;
   displayRecords.forEach(function(r, i) {
-    var idx = globalIdx + i;
+    var idx = i;
     html += '<tr>';
     for (var j = 0; j < fields.length; j++) {
       var val = r[fields[j]] || "";
