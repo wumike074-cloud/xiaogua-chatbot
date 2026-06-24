@@ -6882,9 +6882,13 @@ function renderStep() {
   } else if (step.type === "select") {
     var opts = step.options;
     if (!opts && step.key === "firmware" && typeof fwDB !== "undefined" && fwDB) {
-      var fwProduct = currentProduct;
-      if (!fwDB[fwProduct] && stepData["deviceType"]) fwProduct = stepData["deviceType"];
-      if (fwDB[fwProduct]) opts = fwDB[fwProduct];
+      // Look up firmware by selected device type first (series flow), then by current product
+      var dt = stepData["deviceType"];
+      if (dt && fwDB[dt]) {
+        opts = fwDB[dt];
+      } else if (fwDB[currentProduct]) {
+        opts = fwDB[currentProduct];
+      }
     }
     if (!opts) opts = [];
     var sel = stepData[step.key || step.title] || (step.multi ? [] : "");
