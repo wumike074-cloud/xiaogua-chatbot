@@ -4918,6 +4918,11 @@ function lookupSN(sn) {
   if (snDB[upper] && upper !== sn) return { sn: upper, info: snDB[upper] };
   const lower = sn.toLowerCase();
   if (snDB[lower] && lower !== sn) return { sn: lower, info: snDB[lower] };
+  // Fallback: check test records index for recently tested devices
+  var tri = _testRecordsIndex[sn.toUpperCase()];
+  if (tri) {
+    return { sn: sn.toUpperCase(), info: [tri.order || "", "已测试", "", tri.date || ""], fromTestRecords: true };
+  }
   return null;
 }
 
