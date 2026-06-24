@@ -92,7 +92,7 @@ addFW(["Sfaira one", "Sfaira one plus", "Sfaira one lite"], []);
 addFW(["SAgro200", "SAgro150", "SAgro100", "SAgro10", "SAgro180"], []);
 
 // SDL2, DL, SL100, SP100
-addFW(["SDL2", "DL", "SL100", "SP100"], []);
+addFW(["SDL2", "DL", "DL07", "DL15", "SL100", "SP100"], []);
 
 // SC series
 addFW(["SC260", "SC200", "SC300", "SC280", "SC60", "SC220"], []);
