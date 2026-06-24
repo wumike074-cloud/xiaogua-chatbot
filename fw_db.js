@@ -100,7 +100,8 @@ addFW(["SC260", "SC200", "SC300", "SC280", "SC60", "SC220"], []);
 // T8 series
 addFW(["T8", "T8 PRO"], []);
 
-// SV100 series — 待更新，稍后提供固件版本
+// STS/TS/SET series
+addFW(["STSA9", "STS1", "STS2", "TS1000", "SET1"], []);
 addFW(["SV100", "SV100 Dual", "SV100 INS-D"], [
   "1.0.G18XQ-Russia",
   "1.0.G18XB-NL",
