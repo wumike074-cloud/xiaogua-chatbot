@@ -4999,7 +4999,7 @@ function renderSNResult(results) {
     html += '<div style="margin-top:8px;font-size:11px;color:#999">SN: ' + escapeHtml(r.sn) + '</div>';
     html += '</div>';
     // Append test record info if available
-    var tri = _testRecordsIndex[r.sn];
+    var tri = _testRecordsIndex[r.sn.toUpperCase()];
     if (tri) {
       html += '<div style="margin-top:6px;padding:6px 8px;background:#e8f5e9;border-radius:6px;font-size:11px;color:#2e7d32">已测试';
       if (tri.tester) html += ' | 测试人: ' + escapeHtml(tri.tester);
@@ -5023,7 +5023,7 @@ function renderSNResult(results) {
       if (device) html += ' &nbsp;|&nbsp; ' + escapeHtml(device);
       if (country) html += ' &nbsp;|&nbsp; ' + escapeHtml(country);
       if (date) html += ' &nbsp;|&nbsp; ' + escapeHtml(date);
-      var tri = _testRecordsIndex[r.sn];
+      var tri = _testRecordsIndex[r.sn.toUpperCase()];
       if (tri) {
         html += ' <span style="color:#2e7d32;font-size:11px">| 已测试';
         if (tri.tester) html += ' | 测试人: ' + escapeHtml(tri.tester);
@@ -7792,11 +7792,14 @@ function syncTestRecordsIndex() {
   return loadAllTestRecords(sb).then(function(records) {
     var idx = {};
     records.forEach(function(r) {
-      if (r.sn) idx[r.sn] = { order: r.order || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
+      if (r.sn) idx[r.sn.toUpperCase()] = { order: r.order || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
     });
     _testRecordsIndex = idx;
     localStorage.setItem(CACHE_KEY, JSON.stringify(idx));
-  }).catch(function() {});
+    console.log("[syncTestRecordsIndex] Indexed " + Object.keys(idx).length + " test records");
+  }).catch(function(err) {
+    console.warn("[syncTestRecordsIndex] Failed:", err.message);
+  });
 }
 
 function loadAllTestRecords(sb) {
