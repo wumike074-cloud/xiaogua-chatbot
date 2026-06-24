@@ -7784,12 +7784,16 @@ function loadPendingDevices() {
 function loadTestRecords() {
   var sb = getSupabase();
   if (!sb) return Promise.resolve([]);
-  return sb.from("test_records_v2")
+  var BATCH = 1000;
+  var allRows = [];
+  function fetchBatch(start) {
+    return sb.from("test_records_v2")
     .select("*").order("tested_at", { ascending: false })
+    .range(start, start + BATCH - 1)
     .then(function(r) {
       if (r.error) { console.warn("[Supabase] loadTestRecords:", r.error.message); return []; }
-      return (r.data || []).map(function(row) {
-        return {
+      (r.data || []).forEach(function(row) {
+        allRows.push({
           sn: row.sn, model: row.model, order: row.order_no,
           country: row.country, tester: row.tester,
           firmware: row.firmware, result: row.result,
@@ -7800,9 +7804,13 @@ function loadTestRecords() {
           remark1: (row.test_data && row.test_data.remark1) || "",
           remark2: (row.test_data && row.test_data.remark2) || "",
           regCode: (row.test_data && row.test_data.regCode) || ""
-        };
+        });
       });
+      if ((r.data || []).length === BATCH) return fetchBatch(start + BATCH);
+      return allRows;
     });
+  }
+  return fetchBatch(0);
 }
 
 function refreshPendingList() {
