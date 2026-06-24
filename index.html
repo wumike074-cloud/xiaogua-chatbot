@@ -7802,55 +7802,22 @@ var _recordsCache = [];
 var _testRecordsIndex = {};
 
 function syncTestRecordsIndex() {
-  // Always refresh on page load; also try localStorage cache first for instant display
+  // Load localStorage cache for instant SN lookup before Supabase fetch completes
   var CACHE_KEY = "testRecordsIndex_v2";
   var cached = localStorage.getItem(CACHE_KEY);
   if (cached) {
     try { _testRecordsIndex = JSON.parse(cached); } catch(e) { _testRecordsIndex = {}; }
   }
-  // Clean up old unversioned cache
   try { localStorage.removeItem("testRecordsIndex"); } catch(e) {}
-  var sb = getSupabase();
-  if (!sb) return Promise.resolve();
-  return loadAllTestRecords(sb).then(function(records) {
-    var idx = {};
-    records.forEach(function(r) {
-      if (r.sn) idx[r.sn.toUpperCase()] = { order: r.order || "", country: r.country || "", model: r.model || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
-    });
-    _testRecordsIndex = idx;
-    localStorage.setItem(CACHE_KEY, JSON.stringify(idx));
-    console.log("[syncTestRecordsIndex] Indexed " + Object.keys(idx).length + " test records");
-  }).catch(function(err) {
-    console.warn("[syncTestRecordsIndex] Failed:", err.message);
-  });
 }
 
-function loadAllTestRecords(sb) {
-  var BATCH = 1000;
-  var allRows = [];
-  function fetchBatch(start) {
-    return sb.from("test_records_v2")
-      .select("sn,order_no,country,model,firmware,tester,test_data,tested_at")
-      .order("tested_at", { ascending: false })
-      .range(start, start + BATCH - 1)
-      .then(function(r) {
-        if (r.error) return [];
-        (r.data || []).forEach(function(row) {
-          allRows.push({
-            sn: row.sn, order: row.order_no || "",
-            country: row.country || "",
-            model: row.model || "",
-            firmware: row.firmware || "",
-            tester: row.tester || "",
-            registration: (row.test_data && row.test_data.registration) || "",
-            date: row.tested_at ? row.tested_at.split("T")[0] : ""
-          });
-        });
-        if ((r.data || []).length === BATCH) return fetchBatch(start + BATCH);
-        return allRows;
-      });
-  }
-  return fetchBatch(0);
+function buildTestRecordsIndex(records) {
+  var idx = {};
+  records.forEach(function(r) {
+    if (r.sn) idx[r.sn.toUpperCase()] = { order: r.order || "", country: r.country || "", model: r.model || "", firmware: r.firmware || "", tester: r.tester || "", registration: r.registration || "", date: r.date || "" };
+  });
+  _testRecordsIndex = idx;
+  localStorage.setItem("testRecordsIndex_v2", JSON.stringify(idx));
 }
 
 function loadPendingDevices() {
@@ -7919,6 +7886,7 @@ function refreshPendingList() {
 function refreshRecordsTable() {
   loadTestRecords().then(function(records) {
     _recordsCache = records;
+    buildTestRecordsIndex(records);
     renderRecordsTable();
   }).catch(function(err) {
     console.warn("Failed to load records:", err);
