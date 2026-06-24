@@ -5117,18 +5117,27 @@ function searchKnowledgeBase(query, maxResults = 5) {
 }
 
 // ==================== AI FALLBACK ====================
-async function askAI(query) {
+async function askAI(query, topResults) {
   const provider = settings.aiProvider;
   const apiKey = settings.apiKey;
   if (!apiKey) return null;
 
-  const context = knowledgeBase.map(e =>
-    `Q: ${e.question}\nA: ${e.answer.replace(/\*\*/g, "").replace(/\n\n/g, " | ").replace(/\n/g, " ")}`
-  ).join("\n\n");
+  // Only include top 3 KB matches as context, not the entire knowledge base
+  var context = "";
+  if (topResults && topResults.length) {
+    context = topResults.slice(0, 3).map(function(e) {
+      var answer = (e.entry ? e.entry.answer : e.answer || "").replace(/\*\*/g, "").replace(/\n\n/g, " | ").replace(/\n/g, " ");
+      var question = e.entry ? e.entry.question : e.question || "";
+      return "Q: " + question + "\nA: " + answer;
+    }).join("\n\n");
+  }
 
   const langNames = { en: "English", es: "Spanish", pt: "Brazilian Portuguese", zh: "Chinese" };
   const langInstr = currentLang !== "en" ? ` You MUST respond in ${langNames[currentLang]}.` : "";
-  const systemPrompt = `You are a technical support assistant for RTK/GNSS positioning systems, 3D laser scanners, and agricultural machinery navigation (auto-steer) systems. Answer the user's question based on the knowledge base below. If the knowledge base doesn't cover the question, give a helpful general answer and suggest contacting the manufacturer's technical support. Keep answers structured and practical.${langInstr}\n\n===KNOWLEDGE BASE===\n${context}`;
+  var systemPrompt = `You are a technical support assistant for RTK/GNSS positioning systems, 3D laser scanners, and agricultural machinery navigation (auto-steer) systems. Keep answers structured and practical. If unsure, suggest contacting the manufacturer's technical support.${langInstr}`;
+  if (context) {
+    systemPrompt += "\n\n===RELEVANT KNOWLEDGE===\n" + context;
+  }
 
   try {
     if (provider === "claude") {
@@ -5414,7 +5423,7 @@ async function sendMessage() {
     // No match — try AI fallback
     if (settings.apiKey) {
       addTypingIndicator();
-      const aiAnswer = await askAI(query);
+      const aiAnswer = await askAI(query, result.top);
       removeTypingIndicator();
       if (aiAnswer) {
         addMessage("bot", aiAnswer, { confidence: 0 });
