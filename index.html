@@ -6478,6 +6478,7 @@ const ALL_PRODUCTS = [
   "S20","SAgro200","SAgro150","SAgro100","SAgro10","SAgro180",
   "AL15","SDL2","DL","SL100","SP100",
   "SC260","SC200","SC300","SC280","SC60","SC220",
+  "T8","T8 PRO",
   "SV100","SV100 Dual","SV100 INS","SV100 INS-D"
 ];
 
@@ -6691,6 +6692,20 @@ testStepsConfig["SC300"] = scSteps;
 testStepsConfig["SC280"] = scSteps;
 testStepsConfig["SC60"] = scSteps;
 testStepsConfig["SC220"] = scSteps;
+
+// T8 series
+var t8SeriesSteps = [
+  { type: "select", title: "设备类型", options: ["T8","T8 PRO"], key: "deviceType" },
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "注册期限", options: ["永久","不注册","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "input", title: "IMEI号", placeholder: "输入IMEI号，无需记录则留空", key: "imei" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" }
+];
+testStepsConfig["T8系列"] = t8SeriesSteps;
+testStepsConfig["T8"] = scSteps;
+testStepsConfig["T8 PRO"] = scSteps;
 
 var alSteps = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
@@ -7284,6 +7299,7 @@ function detectModelFromSN(sn) {
   if (/^SC300/.test(s)) return "SC300";
   if (/^SC200/.test(s)) return "SC200";
   if (/^TL/.test(s)) return "SC260";
+  if (/^JM/.test(s)) return "T8系列";
   if (/^Y60/.test(s)) return "SC220";
   if (/^Y1/.test(s)) return "Y1";
   if (/^D/.test(s)) return "SDL2";
@@ -7668,6 +7684,8 @@ function startBatchDevice(sn) {
       model = "Orion one系列";
     } else if (model === "Sfaira One" || model === "Sfaira One Plus" || model === "Sfaira one" || model === "Sfaira one plus" || model === "Sfaira one lite") {
       model = "Sfaira one系列";
+    } else if (model === "T8" || model === "T8 PRO") {
+      model = "T8系列";
     } else if (model === "SV100" || model === "SV100 Dual" || model === "SV100 INS" || model === "SV100 INS-D" || model === "SV100-INS" || model === "SV100-INS-Dual") {
       model = "SV100系列";
     } else if (model === "P2" || model === "P2 Plus") {
