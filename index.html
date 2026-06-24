@@ -4707,6 +4707,7 @@ let currentLang = "zh";
 // ==================== INIT ====================
 function init() {
   autoResizeTextarea();
+  document.getElementById("userInput").addEventListener("keydown", handleKeyDown);
   document.addEventListener("DOMContentLoaded", function() {
     syncTestRecordsIndex();
     refreshPendingList();
@@ -5457,8 +5458,9 @@ function askQuick(question) {
 }
 
 function handleKeyDown(e) {
-  if (e.key === "Enter" && !e.shiftKey) {
+  if ((e.key === "Enter" || e.keyCode === 13) && !e.shiftKey) {
     e.preventDefault();
+    e.stopPropagation();
     sendMessage();
   }
 }
