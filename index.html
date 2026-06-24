@@ -6469,7 +6469,7 @@ const ALL_PRODUCTS = [
   "Sfaira one","Sfaira one plus","Sfaira one lite",
   "S20","SAgro200","SAgro150","SAgro100","SAgro10","SAgro180",
   "AL15","SDL2","DL","SL100","SP100",
-  "SC260","SC200","SC300","SC280","SC60",
+  "SC260","SC200","SC300","SC280","SC60","SC220",
   "SV100","SV100 Dual","SV100 INS","SV100 INS-D"
 ];
 
@@ -6682,6 +6682,7 @@ testStepsConfig["SC200"] = scSteps;
 testStepsConfig["SC300"] = scSteps;
 testStepsConfig["SC280"] = scSteps;
 testStepsConfig["SC60"] = scSteps;
+testStepsConfig["SC220"] = scSteps;
 
 var alSteps = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
@@ -7275,6 +7276,7 @@ function detectModelFromSN(sn) {
   if (/^SC300/.test(s)) return "SC300";
   if (/^SC200/.test(s)) return "SC200";
   if (/^TL/.test(s)) return "SC260";
+  if (/^Y60/.test(s)) return "SC220";
   if (/^Y1/.test(s)) return "Y1";
   if (/^D/.test(s)) return "SDL2";
   // Numeric-prefix models
