@@ -4922,7 +4922,7 @@ function lookupSN(sn) {
   // Fallback: check test records index for recently tested devices
   var tri = _testRecordsIndex[sn.toUpperCase()];
   if (tri) {
-    return { sn: sn.toUpperCase(), info: [tri.order || "", "已测试", "", tri.date || ""], fromTestRecords: true };
+    return { sn: sn.toUpperCase(), info: [tri.order || "", "", "", tri.date || ""] };
   }
   return null;
 }
@@ -5004,16 +5004,6 @@ function renderSNResult(results) {
 
     html += '<div style="margin-top:8px;font-size:11px;color:#999">SN: ' + escapeHtml(r.sn) + '</div>';
     html += '</div>';
-    // Append test record info if available
-    var tri = _testRecordsIndex[r.sn.toUpperCase()];
-    if (tri) {
-      html += '<div style="margin-top:6px;padding:6px 8px;background:#e8f5e9;border-radius:6px;font-size:11px;color:#2e7d32">已测试';
-      if (tri.tester) html += ' | 测试人: ' + escapeHtml(tri.tester);
-      if (tri.firmware) html += ' | 固件: ' + escapeHtml(tri.firmware);
-      if (tri.registration) html += ' | 注册: ' + escapeHtml(tri.registration);
-      if (tri.date) html += ' | ' + escapeHtml(tri.date);
-      html += '</div>';
-    }
     addMessage("bot", html, { confidence: 100, entryId: "sn_" + r.sn, raw: true });
   } else {
     let html = '<div style="font-size:13px;line-height:1.8"><strong>找到 ' + results.length + ' 个SN:</strong><br><br>';
@@ -5029,14 +5019,6 @@ function renderSNResult(results) {
       if (device) html += ' &nbsp;|&nbsp; ' + escapeHtml(device);
       if (country) html += ' &nbsp;|&nbsp; ' + escapeHtml(country);
       if (date) html += ' &nbsp;|&nbsp; ' + escapeHtml(date);
-      var tri = _testRecordsIndex[r.sn.toUpperCase()];
-      if (tri) {
-        html += ' <span style="color:#2e7d32;font-size:11px">| 已测试';
-        if (tri.tester) html += ' | 测试人: ' + escapeHtml(tri.tester);
-        if (tri.firmware) html += ' | 固件: ' + escapeHtml(tri.firmware);
-        if (tri.date) html += ' | ' + escapeHtml(tri.date);
-        html += '</span>';
-      }
       html += '</div>';
     });
     html += '</div>';
