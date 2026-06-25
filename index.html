@@ -7884,11 +7884,8 @@ function buildTestRecordsIndex(records) {
 function loadPendingDevices() {
   var sb = getSupabase();
   if (!sb) return Promise.resolve([]);
-  var today = new Date();
-  today.setHours(0, 0, 0, 0);
   return sb.from("pending_devices")
-    .select("*").gte("created_at", today.toISOString())
-    .order("created_at", { ascending: true })
+    .select("*").order("created_at", { ascending: true })
     .then(function(r) {
       if (r.error) { console.warn("[Supabase] loadPendingDevices:", r.error.message); return []; }
       return (r.data || []).map(function(row) {
