@@ -52,6 +52,11 @@ addFW(["E1 lite"], [
   "Z1_V4.3.0.5N1"
 ]);
 
+// X1-Z
+addFW(["X1-Z"], [
+  "PM_V1.0.6"
+]);
+
 // Horus
 addFW(["Horus"], [
   "1.0.A035"
