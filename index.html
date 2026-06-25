@@ -5166,7 +5166,10 @@ function searchKnowledgeBase(query, maxResults = 5) {
 }
 
 // ==================== AI FALLBACK ====================
+// NOTE: External AI API disabled — no token consumption
+var AI_API_DISABLED = true;
 async function askAI(query, topResults) {
+  if (AI_API_DISABLED) return null;
   const provider = settings.aiProvider;
   const apiKey = settings.apiKey;
   if (!apiKey) return null;
@@ -5679,6 +5682,7 @@ function parseSpecValue(unit, match, fullText, specDef) {
 }
 
 async function extractSpecsWithAI(pastedText, category) {
+  if (AI_API_DISABLED) return null;
   const apiKey = settings.apiKey;
   if (!apiKey) return null;
 
@@ -6152,7 +6156,7 @@ function renderStep2(wizard) {
         <div class="label">${t("competitor")}: <strong>${escapeHtml(compareState.competitorName)}</strong> — parameters extracted</div>
       </div>
     </div>
-    ${settings.apiKey ? `<button class="btn-ai" onclick="wizardStep2_aiEnhance()" data-i18n="ai_enhance">Extract with AI</button>` : ""}
+${/* AI extraction disabled */ ""}
     <div class="btn-row">
       <button class="btn-cancel" onclick="wizardBack()" data-i18n="back">Back</button>
       <button class="btn-save" onclick="wizardNext()" data-i18n="generate_report">Generate Report</button>
