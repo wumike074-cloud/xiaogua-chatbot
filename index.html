@@ -836,7 +836,7 @@ body {
 <script src="qrcode.bundle.js"></script>
 <script src="sn_db_full.js"></script>
 <script src="order_db.js"></script>
-<script src="fw_db.js?v=20260624"></script>
+<script src="fw_db.js?v=20260624a"></script>
 <script>
 // ==================== KNOWLEDGE BASE ====================
 // Add your Q&A pairs here. Each entry:
@@ -5191,6 +5191,7 @@ function searchKnowledgeBase(query, maxResults = 5) {
 }
 
 // ==================== AI FALLBACK ====================
+// NOTE: External AI API disabled — no token consumption
 var AI_API_DISABLED = true;
 async function askAI(query, topResults) {
   if (AI_API_DISABLED) return null;
@@ -6180,7 +6181,7 @@ function renderStep2(wizard) {
         <div class="label">${t("competitor")}: <strong>${escapeHtml(compareState.competitorName)}</strong> — parameters extracted</div>
       </div>
     </div>
-    ${/* AI extraction disabled */ ""}
+${/* AI extraction disabled */ ""}
     <div class="btn-row">
       <button class="btn-cancel" onclick="wizardBack()" data-i18n="back">Back</button>
       <button class="btn-save" onclick="wizardNext()" data-i18n="generate_report">Generate Report</button>
@@ -6655,7 +6656,18 @@ testStepsConfig["X1 lite"] = testStepsConfig["X1"];
 testStepsConfig["E1"] = testStepsConfig["X1"];
 testStepsConfig["X1 Pro"] = testStepsConfig["X1"];
 testStepsConfig["E1 Pro"] = testStepsConfig["X1"];
-testStepsConfig["E1 lite"] = testStepsConfig["X1"];
+var e1liteSteps = [
+  { type: "select", title: "设备类型", options: ["E1 lite", "X1-Z"], key: "deviceType" },
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "固件版本", key: "firmware" },
+  { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["E1 lite"] = e1liteSteps;
+testStepsConfig["X1-Z"] = e1liteSteps;
 
 // Z1 系列和 Orion one 系列：不含 IMEI
 testStepsConfig["Z1"] = [
@@ -7775,7 +7787,7 @@ function startBatchDevice(sn) {
     batchState.currentSN = sn;
     var model = device.model;
     // Model disambiguation — map individual models to their series config
-    if (model === "X1" || model === "E1" || model === "X1 Lite" || model === "E1 Lite" || model === "X1 Pro" || model === "E1 Pro") {
+    if (model === "X1" || model === "E1" || model === "X1 Lite" || model === "X1 Pro" || model === "E1 Pro") {
       model = "X1系列";
     } else if (model === "Z1" || model === "Z1 Lite") {
       model = "Z1系列";
