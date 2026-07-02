@@ -7839,7 +7839,9 @@ function markBatchDeviceDone(sn) {
       sn: dev.sn, model: dev.model, order: dev.order,
       country: dev.country, tested: true, regCode: dev.regCode
     }).catch(function(err) {
-      console.warn("Failed to mark done:", err);
+      alert("标记已测失败: " + err.message + "\n测试记录已保存，但待测列表状态未同步。");
+      dev.tested = false;
+      renderPendingList();
     });
   }
   // Release lock
@@ -7923,7 +7925,7 @@ function loadPendingDevices() {
   return sb.from("pending_devices")
     .select("*").order("created_at", { ascending: true })
     .then(function(r) {
-      if (r.error) { console.warn("[Supabase] loadPendingDevices:", r.error.message); return []; }
+      if (r.error) throw new Error(r.error.message);
       return (r.data || []).map(function(row) {
         return {
           sn: row.sn, model: row.model, order: row.order_no,
@@ -7945,7 +7947,7 @@ function loadTestRecords() {
     .select("*").order("tested_at", { ascending: false })
     .range(start, start + BATCH - 1)
     .then(function(r) {
-      if (r.error) { console.warn("[Supabase] loadTestRecords:", r.error.message); return []; }
+      if (r.error) throw new Error(r.error.message);
       (r.data || []).forEach(function(row) {
         allRows.push({
           sn: row.sn, model: row.model, order: row.order_no,
@@ -7984,6 +7986,7 @@ function refreshRecordsTable() {
     renderRecordsTable();
   }).catch(function(err) {
     console.warn("Failed to load records:", err);
+    renderRecordsTable();
   });
 }
 
@@ -8198,9 +8201,7 @@ function finishTest() {
     recDiv.style.background = "#e8f5e9";
     setTimeout(function() { recDiv.style.background = ""; }, 1000);
   }).catch(function(err) {
-    alert("保存测试记录失败: " + err.message);
-    _recordsCache.unshift(record);
-    renderRecordsTable();
+    alert("保存测试记录失败: " + err.message + "\n请检查网络后重试，不要刷新页面。");
   });
 }
 
