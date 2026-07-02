@@ -4757,8 +4757,10 @@ let currentLang = "zh";
 function init() {
   autoResizeTextarea();
   document.getElementById("userInput").addEventListener("keydown", handleKeyDown);
+  syncTestRecordsIndex();
+  refreshPendingList();
+  refreshRecordsTable();
   document.addEventListener("DOMContentLoaded", function() {
-    syncTestRecordsIndex();
     refreshPendingList();
     refreshRecordsTable();
   });
@@ -4905,6 +4907,16 @@ function lookupOrder(orderNum) {
   if (orderDB[upper] && upper !== orderNum) return { order: upper, sns: orderDB[upper] };
   const lower = orderNum.toLowerCase();
   if (orderDB[lower] && lower !== orderNum) return { order: lower, sns: orderDB[lower] };
+  // Fallback: search test records index for SNs matching this order
+  var testRecSNs = [];
+  var searchKey = orderNum.toUpperCase();
+  for (var sn in _testRecordsIndex) {
+    var rec = _testRecordsIndex[sn];
+    if (rec && rec.order && rec.order.toUpperCase() === searchKey) {
+      testRecSNs.push(sn);
+    }
+  }
+  if (testRecSNs.length > 0) return { order: orderNum, sns: testRecSNs };
   return null;
 }
 
@@ -4928,6 +4940,15 @@ function detectOrderQuery(query) {
     if (result) return result;
     return { order: orderNum, sns: null };
   }
+  // Auto-detect broader order numbers (e.g., XYZAMAUSA2606098-FBA) — only if lookup succeeds
+  var broadMatch = trimmed.match(/\b([A-Z]{4,}\d{4,}(?:-[A-Z0-9]+)?)\b/);
+  if (broadMatch) {
+    var orderNum2 = broadMatch[1].toUpperCase();
+    if (orderNum2.indexOf("SXH") !== 0) {
+      var result2 = lookupOrder(orderNum2);
+      if (result2) return result2;
+    }
+  }
   return null;
 }
 
@@ -4936,8 +4957,12 @@ function renderOrderResult(result) {
     // Group SNs by device type
     const groups = {};
     result.sns.forEach(sn => {
-      const rec = snDB[sn];
-      const device = (rec && rec[1]) ? rec[1] : '未知型号';
+      var rec = snDB[sn];
+      var device = (rec && rec[1]) ? rec[1] : null;
+      if (!device) {
+        var tri = _testRecordsIndex[sn.toUpperCase()];
+        device = (tri && tri.model) ? tri.model : '未知型号';
+      }
       if (!groups[device]) groups[device] = [];
       groups[device].push(sn);
     });
@@ -7814,7 +7839,9 @@ function markBatchDeviceDone(sn) {
       sn: dev.sn, model: dev.model, order: dev.order,
       country: dev.country, tested: true, regCode: dev.regCode
     }).catch(function(err) {
-      console.warn("Failed to mark done:", err);
+      alert("标记已测失败: " + err.message + "\n测试记录已保存，但待测列表状态未同步。");
+      dev.tested = false;
+      renderPendingList();
     });
   }
   // Release lock
@@ -7898,7 +7925,7 @@ function loadPendingDevices() {
   return sb.from("pending_devices")
     .select("*").order("created_at", { ascending: true })
     .then(function(r) {
-      if (r.error) { console.warn("[Supabase] loadPendingDevices:", r.error.message); return []; }
+      if (r.error) throw new Error(r.error.message);
       return (r.data || []).map(function(row) {
         return {
           sn: row.sn, model: row.model, order: row.order_no,
@@ -7920,7 +7947,7 @@ function loadTestRecords() {
     .select("*").order("tested_at", { ascending: false })
     .range(start, start + BATCH - 1)
     .then(function(r) {
-      if (r.error) { console.warn("[Supabase] loadTestRecords:", r.error.message); return []; }
+      if (r.error) throw new Error(r.error.message);
       (r.data || []).forEach(function(row) {
         allRows.push({
           sn: row.sn, model: row.model, order: row.order_no,
@@ -7959,6 +7986,7 @@ function refreshRecordsTable() {
     renderRecordsTable();
   }).catch(function(err) {
     console.warn("Failed to load records:", err);
+    renderRecordsTable();
   });
 }
 
@@ -8014,8 +8042,7 @@ function deletePendingDevice(sn) {
 function deleteAllPendingDevices() {
   var sb = getSupabase();
   if (!sb) return Promise.reject(new Error("Supabase not available"));
-  var today = new Date(); today.setHours(0, 0, 0, 0);
-  return sb.from("pending_devices").delete().gte("created_at", today.toISOString()).then(function(r) {
+  return sb.from("pending_devices").delete().neq("sn", "").then(function(r) {
     if (r.error) throw new Error(r.error.message);
     return r;
   });
@@ -8174,9 +8201,7 @@ function finishTest() {
     recDiv.style.background = "#e8f5e9";
     setTimeout(function() { recDiv.style.background = ""; }, 1000);
   }).catch(function(err) {
-    alert("保存测试记录失败: " + err.message);
-    _recordsCache.unshift(record);
-    renderRecordsTable();
+    alert("保存测试记录失败: " + err.message + "\n请检查网络后重试，不要刷新页面。");
   });
 }
 
