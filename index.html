@@ -836,7 +836,7 @@ body {
 <script src="qrcode.bundle.js"></script>
 <script src="sn_db_full.js"></script>
 <script src="order_db.js"></script>
-<script src="fw_db.js?v=20260624a"></script>
+<script src="fw_db.js?v=20260702"></script>
 <script>
 // ==================== KNOWLEDGE BASE ====================
 // Add your Q&A pairs here. Each entry:
@@ -6560,6 +6560,7 @@ init();
 const ALL_PRODUCTS = [
   "X1","X1 lite","X1 Pro","Y1","Z1","Z1 lite",
   "E1","E1 Pro","E1 lite","Orion one","Orion one-AR","Orion one-Laser",
+  "L1","L1-laser","L1-AR",
   "H1","Horus","XBase","P2","P2 Plus",
   "Sfaira one","Sfaira one plus","Sfaira one lite",
   "S20","SAgro200","SAgro150","SAgro100","SAgro10","SAgro180",
@@ -6696,6 +6697,21 @@ var orionOneSteps = [
 testStepsConfig["Orion one"] = orionOneSteps;
 testStepsConfig["Orion one-AR"] = orionOneSteps;
 testStepsConfig["Orion one-Laser"] = orionOneSteps;
+// L1 系列：含设备类型选择 (L1/L1-laser/L1-AR)
+var l1Steps = [
+  { type: "select", title: "设备类型", options: ["L1","L1-laser","L1-AR"], key: "deviceType" },
+  { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
+  { type: "input", title: "订单", placeholder: "输入订单号", key: "order" },
+  { type: "input", title: "国家", placeholder: "输入国家或扫描SN自动填入", key: "country" },
+  { type: "select", title: "固件版本", key: "firmware" },
+  { type: "select", title: "注册期限", options: ["永久","60天","90天","30天","自定义"], key: "registration", customOption: true, customPlaceholder: "请输入注册天数" },
+  { type: "select", title: "测试人", options: ["Gus","Kyrie","Kimberly","Kevin Loo","Ronaljian","Satoshi","Linden"], key: "tester" },
+  { type: "input", title: "备注", placeholder: "其他需要记录的信息", key: "remark1" }
+];
+testStepsConfig["L1系列"] = l1Steps;
+testStepsConfig["L1"] = l1Steps;
+testStepsConfig["L1-laser"] = l1Steps;
+testStepsConfig["L1-AR"] = l1Steps;
 testStepsConfig["XBase"] = testStepsConfig["X1"];
 testStepsConfig["Horus"] = [
   { type: "input", title: "SN", placeholder: "输入SN", key: "sn" },
@@ -7421,7 +7437,7 @@ function detectModelFromSN(sn) {
   if (/^18/.test(s)) return "P2系列";
   if (/^21/.test(s)) return "X1系列";
   if (/^22/.test(s)) return "E1 lite";
-  if (/^31/.test(s)) return "Orion one系列";
+  if (/^31/.test(s)) return "L1系列";
   if (/^41/.test(s)) return "S20";
   if (/^51/.test(s)) return "Z1系列";
   if (/^61/.test(s)) return "Horus";
@@ -7793,6 +7809,8 @@ function startBatchDevice(sn) {
       model = "Z1系列";
     } else if (model === "Orion one" || model === "Orion one-Laser" || model === "Orion one-AR" || model === "Orion one-laser") {
       model = "Orion one系列";
+    } else if (model === "L1" || model === "L1-laser" || model === "L1-AR") {
+      model = "L1系列";
     } else if (model === "Sfaira One" || model === "Sfaira One Plus" || model === "Sfaira one" || model === "Sfaira one plus" || model === "Sfaira one lite") {
       model = "Sfaira one系列";
     } else if (model === "T8" || model === "T8 PRO") {

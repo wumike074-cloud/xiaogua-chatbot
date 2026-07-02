@@ -84,6 +84,9 @@ addFW(["Orion one", "Orion one-AR", "Orion one-Laser"], [
   "1.0.A10E87"
 ]);
 
+// L1 series
+addFW(["L1", "L1-laser", "L1-AR"], []);
+
 // Y1 — static options in step config
 addFW(["Y1"], []);
 
