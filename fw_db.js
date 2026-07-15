@@ -22,7 +22,7 @@ addFW(["X1", "X1 lite", "E1"], [
 
 // X1 Pro / E1 Pro group
 addFW(["X1 Pro", "E1 Pro"], [
-  "1.0.A20K11",
+  "1.0.A20K16",
   "1.0.A20K7-X1Pro-NOLOGO",
   "1.0.A20K9-V15-20260410",
   "1.0.A20K7U-UAE-AQ10Pro"
@@ -64,7 +64,7 @@ addFW(["Horus"], [
 
 // P2 / P2 Plus
 addFW(["P2", "P2 Plus"], [
-  "V2.4.0.8"
+  "V2.4.0.9"
 ]);
 
 // S20
@@ -81,7 +81,7 @@ addFW(["XBase"], [
 addFW(["Orion one", "Orion one-AR", "Orion one-Laser"], [
   "1.0.A10E81RX",
   "1.0.A10E71-NOLOGO",
-  "1.0.A10E87"
+  "1.0.A10E89"
 ]);
 
 // L1 series
